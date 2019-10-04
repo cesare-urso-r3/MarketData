@@ -1,10 +1,10 @@
-package com.template.states
+package com.marketdata.states
 
-import com.template.ALICE
-import com.template.BOB
-import com.template.CHARLIE
-import com.template.MEGACORP
-import com.template.MINICORP
+import com.marketdata.ALICE
+import com.marketdata.BOB
+import com.marketdata.CHARLIE
+import com.marketdata.MEGACORP
+import com.marketdata.MINICORP
 import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.Party

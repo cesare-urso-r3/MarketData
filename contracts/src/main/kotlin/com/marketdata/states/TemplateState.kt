@@ -1,6 +1,6 @@
-package com.template.states
+package com.marketdata.states
 
-import com.template.contracts.TemplateContract
+import com.marketdata.contracts.TemplateContract
 import net.corda.core.contracts.*
 import net.corda.core.identity.Party
 import java.util.*
