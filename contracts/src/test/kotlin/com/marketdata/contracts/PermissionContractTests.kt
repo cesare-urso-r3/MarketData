@@ -3,7 +3,7 @@ package com.marketdata.contracts
 import net.corda.testing.node.MockServices
 import org.junit.Test
 
-class ContractTests {
+class PermissionContractTests {
     private val ledgerServices = MockServices()
 
     @Test
