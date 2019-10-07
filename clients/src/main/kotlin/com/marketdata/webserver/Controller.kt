@@ -1,5 +1,6 @@
 package com.marketdata.webserver
 
+import com.marketdata.states.PermissionState
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,8 +19,9 @@ class Controller(rpc: NodeRPCConnection) {
 
     private val proxy = rpc.proxy
 
-    @GetMapping(value = "/templateendpoint", produces = arrayOf("text/plain"))
-    private fun templateendpoint(): String {
-        return "Define an endpoint here."
+    @GetMapping(value = "/marketdataendpoint", produces = arrayOf("text/plain"))
+    private fun marketdataendpoint(): String {
+        return proxy.vaultQuery(PermissionState::class.java).states
+                .map { it.state.data.toString() }.toString()
     }
 }
