@@ -16,6 +16,6 @@ data class PermissionState(val dataset: String,
     override val participants: List<Party> get() = setOf(subscriber, provider, dataChargeOwner).filterNotNull().toList()
 
     fun withNewDataChargeOwner(newDataChargeOwner: Party): PermissionState {
-        return this.copy(dataChargeOwner = newDataChargeOwner)
+        return this.copy(dataChargeOwner = newDataChargeOwner, linearId =  linearId)
     }
 }

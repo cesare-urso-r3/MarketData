@@ -57,6 +57,10 @@ class PermissionContract : Contract {
                     val cpyInputState = inputState.copy(dataChargeOwner = outputState.dataChargeOwner)
 
                     "Only the data charge owner is permitted to change" using (outputState == cpyInputState)
+
+
+                    "All parties involved must sign permission issue transaction." using (
+                            cmd.signers.toSet() == (inputState.participants + outputState.participants).map { it.owningKey }.toSet())
                 }
                 else -> {
                     throw IllegalArgumentException("Unknown command: ${this.toString()}")
