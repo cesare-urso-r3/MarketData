@@ -1,69 +1,73 @@
 package com.marketdata.contracts
 
-// TODO: Can be deleted
-//
-//import com.marketdata.ALICE
-//import com.marketdata.BOB
-//import com.marketdata.CHARLIE
-//import com.marketdata.MEGACORP
-//import com.marketdata.MINICORP
-//import com.marketdata.states.PermissionState
-//import net.corda.core.contracts.TypeOnlyCommandData
-//import net.corda.testing.node.MockServices
-//import net.corda.testing.node.ledger
-//import org.junit.Test
-//import java.io.File
-//
-//class PermissionContractIssueTests {
-//    private val ledgerServices = MockServices()
-//
-//    class DummyCommand : TypeOnlyCommandData()
-//// val attachmentFile = File("src/test/resources/prices.zip")
-//
+import com.marketdata.ALICE
+import com.marketdata.BOB
+import com.marketdata.CHARLIE
+import com.marketdata.MEGACORP
+import com.marketdata.MINICORP
+import com.marketdata.data.PricingParameter
+import com.marketdata.states.DataSetState
+import com.marketdata.states.PermissionState
+import com.marketdata.states.SignedTermsAndConditionsState
+import com.marketdata.states.TermsAndConditionsState
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.TypeOnlyCommandData
+import net.corda.testing.node.MockServices
+import net.corda.testing.node.ledger
+import org.junit.Test
+import java.io.File
+import java.security.Permission
+
+class DataSetContractTests {
+    private val ledgerServices = MockServices()
+
+    class DummyCommand : TypeOnlyCommandData()
+    val attachmentFile = File("src/test/resources/DemoT&C.zip")
+
+    @Test
+    fun dataSetIssue() {
+
+        ledgerServices.ledger {
+            transaction {
+                val attachmentId = attachment(attachmentFile.inputStream())
+                val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+                val pointer = LinearPointer(tandc.linearId, TermsAndConditionsState::class.java)
+                val prices  = PricingParameter(10.0)
+                output(DataSetContract.ID, DataSetState("LSE L1", BOB.party, listOf(prices), pointer))
+                command(listOf(BOB.publicKey), DataSetContract.Commands.Issue()) // Correct type.
+                this.verifies()
+            }
+        }
+    }
+
+// val attachmentFile = File("src/test/resources/prices.zip")
+
 //    @Test
-//    fun vanilla2Party() {
+//    fun dataSetIssue() {
 //
 //        ledgerServices.ledger {
 //            transaction {
-//                output(PermissionContract.ID, PermissionState("data_set", ALICE.party, BOB.party))
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
-//                this.verifies()
-//            }
-//            // explicit null
-//            transaction {
-//                output(PermissionContract.ID,  PermissionState("data_set", ALICE.party, BOB.party, null))
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
+//                output(DataSetContract.ID, DataSetState("data_set", BOB.party))
+//                command(listOf(BOB.publicKey), DataSetContract.Commands.Issue()) // Correct type.
 //                this.verifies()
 //            }
 //        }
 //    }
 //
-//    @Test
-//    fun vanilla3Party() {
+//    fun permissionState() {
+//
 //        ledgerServices.ledger {
 //            transaction {
-//                output(PermissionContract.ID, PermissionState("data_set", ALICE.party, BOB.party, CHARLIE.party))
-//                command(listOf(ALICE.publicKey, BOB.publicKey, CHARLIE.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
-//                this.verifies()
-//            }
-//            transaction {
-//                output(PermissionContract.ID, PermissionState("data_set", ALICE.party, BOB.party, ALICE.party))
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
-//                this.verifies()
-//            }
-//            transaction {
-//                output(PermissionContract.ID, PermissionState("data_set", ALICE.party, BOB.party, BOB.party))
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
+//                val dsState = DataSetState("data_set", BOB.party).linearId
+//                output(PermissionContract.ID, PermissionState("data_set", dsState, BOB.party, ALICE.party, CHARLIE.party))
+//                command(listOf(BOB.publicKey), DataSetContract.Commands.Issue()) // Correct type.
+//                reference(DataSetContract.ID, dsState)
 //                this.verifies()
 //            }
 //        }
 //    }
-//
+
+
 //    @Test
 //    fun mustIncludeIssueCommand() {
 //        val perm = PermissionState("data_set", ALICE.party, BOB.party)
@@ -195,4 +199,4 @@ package com.marketdata.contracts
 //            }
 //        }
 //    }
-//}
+}
