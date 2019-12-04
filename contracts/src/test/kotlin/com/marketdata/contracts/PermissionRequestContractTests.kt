@@ -56,6 +56,7 @@ class PermissionRequestContractTests {
 
                 val distDataSet = DistributableDataSetState("LSE L1",
                         CHARLIE.party,
+                        BOB.party,
                         dataSetPointer,
                         listOf(distPrices),
                         distTandCpointer)
@@ -65,11 +66,11 @@ class PermissionRequestContractTests {
                                 DistributableDataSetState::class.java)
 
                 val signedDataTandCs =
-                        SignedTermsAndConditionsState("StandardTerms", ALICE.party, dataTandCpointer)
+                        SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, dataTandCpointer)
                 val signedDataTandCsPointer =
                         LinearPointer(signedDataTandCs.linearId, SignedTermsAndConditionsState::class.java)
                 val signedDistTandCs =
-                        SignedTermsAndConditionsState("DistributableTerms", ALICE.party, distTandCpointer)
+                        SignedTermsAndConditionsState("DistributableTerms", distTandC.issuer, ALICE.party, distTandCpointer)
                 val signedDistTandCsPointer =
                         LinearPointer(signedDistTandCs.linearId, SignedTermsAndConditionsState::class.java)
 

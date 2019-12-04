@@ -44,7 +44,7 @@ class DistributorTests {
                 val tandCpointer = LinearPointer(tandc.linearId, TermsAndConditionsState::class.java)
 
                 val signedDataTandCs =
-                        SignedTermsAndConditionsState("StandardTerms", CHARLIE.party, tandCpointer)
+                        SignedTermsAndConditionsState("StandardTerms", tandc.issuer, CHARLIE.party, tandCpointer)
                 val signedDataTandCsPointer =
                         LinearPointer(signedDataTandCs.linearId, SignedTermsAndConditionsState::class.java)
 

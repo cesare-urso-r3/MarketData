@@ -15,7 +15,7 @@ import java.time.LocalDate
 @BelongsToContract(UsageContract::class)
 class UsageState(val dataSetName : String,
                  val permissionState : LinearPointer<PermissionRequestState>,
-                 val paidUsageState: LinearPointer<UsageState>?,
+                 val paidUsageState: LinearPointer<UsageReceiptState>?,
                  val provider: Party,
                  val redistributor : Party,
                  val subscriber: Party,
@@ -28,10 +28,8 @@ class UsageState(val dataSetName : String,
     override fun generateMappedObject(schema: MappedSchema): PersistentState {
         return when (schema) {
             is UsageSchemaV1 -> UsageSchemaV1.PersistentUsage(
-                    this.dataSetName,
-                    this.provider.name.toString(),
                     this.subscriber.name.toString(),
-                    this.redistributor.owningKey.toString(),
+                    this.redistributor.toString(),
                     this.date
             )
             else -> throw IllegalArgumentException("Unrecognised schema $schema")
@@ -39,4 +37,8 @@ class UsageState(val dataSetName : String,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(UsageSchemaV1)
+
+    override fun toString(): String {
+        return "USAGE_STATE $dataSetName $provider $subscriber $redistributor $date $userName"
+    }
 }

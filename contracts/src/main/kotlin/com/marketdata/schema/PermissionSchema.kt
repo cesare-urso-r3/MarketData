@@ -30,14 +30,11 @@ object PermissionSchemaV1 : MappedSchema(
             @Column(name = "subscriber")
             var subscriberName: String,
 
-            @Column(name = "dataChargeOwner")
-            var dataChargeOwnerName: String,
-
-            @Column(name = "linear_id")
-            var linearId: UUID
+            @Column(name = "redistributor")
+            var redistributorName: String
 
     ) : PersistentState() {
         // Default constructor required by hibernate.
-        constructor() : this("", "", "", "", UUID.randomUUID())
+        constructor() : this("", "", "", "")
     }
 }

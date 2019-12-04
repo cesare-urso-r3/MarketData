@@ -33,7 +33,7 @@ class DataSetState(val name : String,
     }
 
     override fun toString() : String {
-        return  "$name/${provider.name}"
+        return  "$name/${provider.name} ($linearId)"
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(DataSetSchemaV1)

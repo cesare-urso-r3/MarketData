@@ -29,7 +29,7 @@ class DataSetIssueFlowTests {
 
     init {
         listOf(a, b, c).forEach {
-            it.registerInitiatedFlow(DataSetIssueResponder::class.java)
+         //   it.registerInitiatedFlow(DataSetIssueResponder::class.java)
         }
     }
 

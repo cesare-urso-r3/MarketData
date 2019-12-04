@@ -1,14 +1,8 @@
 package com.marketdata.contracts
 
-import com.marketdata.ALICE
 import com.marketdata.BOB
-import com.marketdata.CHARLIE
-import com.marketdata.MEGACORP
-import com.marketdata.MINICORP
 import com.marketdata.data.PricingParameter
 import com.marketdata.states.DataSetState
-import com.marketdata.states.PermissionState
-import com.marketdata.states.SignedTermsAndConditionsState
 import com.marketdata.states.TermsAndConditionsState
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.TypeOnlyCommandData
@@ -16,7 +10,6 @@ import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 import java.io.File
-import java.security.Permission
 
 class DataSetContractTests {
     private val ledgerServices = MockServices()

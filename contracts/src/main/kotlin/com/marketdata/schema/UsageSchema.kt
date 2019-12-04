@@ -18,12 +18,6 @@ object UsageSchemaV1 : MappedSchema(
     @Entity
     @Table(name = "usage_states")
     class PersistentUsage(
-            @Column(name = "dataSet")
-            var dataSet: String,
-
-            @Column(name = "provider")
-            var providerName: String,
-
             @Column(name = "subscriber")
             var subscriberName: String,
 
@@ -36,8 +30,6 @@ object UsageSchemaV1 : MappedSchema(
     ) : PersistentState() {
         // Default constructor required by hibernate.
         constructor() : this("",
-                "",
-                "",
                 "",
                 "")
     }

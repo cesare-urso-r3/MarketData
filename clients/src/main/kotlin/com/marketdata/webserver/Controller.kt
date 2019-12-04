@@ -1,19 +1,13 @@
 package com.marketdata.webserver
 
-import com.marketdata.contracts.PermissionContract
 import com.marketdata.flows.PermissionIssueInitiator
 import com.marketdata.flows.UsageIssueInitiator
-import com.marketdata.states.PermissionState
 import com.marketdata.states.UsageState
-import com.sun.org.apache.xalan.internal.lib.NodeInfo
-import net.corda.core.crypto.internal.providerMap
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.messaging.FlowHandle
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 
 interface JSONItem {

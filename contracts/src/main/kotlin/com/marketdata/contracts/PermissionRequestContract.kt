@@ -36,8 +36,8 @@ class PermissionRequestContract : Contract {
 //                println("Subscriber: ${outputState.subscriber.owningKey}")
 //                println("Redistributor: ${outputState.dataChargeOwner.owningKey}")
 
-                "The subscriber must sign" using (
-                        cmd.signers.toSet() == setOf(outputState.subscriber.owningKey))
+                "All parties must sign" using (
+                        cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
 
                 "The dataSet name cannot be empty" using ( outputState.dataSetName.isNotEmpty() )
 

@@ -2,26 +2,18 @@ package com.marketdata.contracts
 
 import com.marketdata.ALICE
 import com.marketdata.BOB
-import com.marketdata.CHARLIE
-import com.marketdata.MEGACORP
-import com.marketdata.MINICORP
-import com.marketdata.states.DataSetState
-import com.marketdata.states.PermissionState
 import com.marketdata.states.SignedTermsAndConditionsState
 import com.marketdata.states.TermsAndConditionsState
 import net.corda.core.contracts.LinearPointer
-import net.corda.core.contracts.StatePointer
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.node.NotaryInfo
 import net.corda.testing.common.internal.testNetworkParameters
-import net.corda.testing.contracts.DummyContract
 import net.corda.testing.core.DUMMY_NOTARY_NAME
 import net.corda.testing.core.TestIdentity
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 import java.io.File
-import java.security.Permission
 
 class TermsAndConditionsContractTests {
     val DUMMY_NOTARY = TestIdentity(DUMMY_NOTARY_NAME, 20).party
@@ -61,7 +53,7 @@ class TermsAndConditionsContractTests {
                 val attachmentId = attachment(attachmentFile.inputStream())
                 val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
                 val pointer = LinearPointer(tandc.linearId, TermsAndConditionsState::class.java)
-                output(SignedTermsAndConditionsContract.ID, SignedTermsAndConditionsState("StandardTerms", ALICE.party, pointer))
+                output(SignedTermsAndConditionsContract.ID, SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, pointer))
                 reference(TermsAndConditionsContract.ID, tandc)
                 command(listOf(ALICE.publicKey), SignedTermsAndConditionsContract.Commands.Issue()) // Correct type.
                 this.verifies()

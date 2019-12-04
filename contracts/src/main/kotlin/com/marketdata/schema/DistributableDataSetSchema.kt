@@ -22,10 +22,13 @@ object DistributableDataSetSchemaV1 : MappedSchema(
             var name: String,
 
             @Column(name = "provider")
-            var providerName: String
+            var providerName: String,
+
+            @Column(name = "redistributor")
+            var redistributorName: String
 
     ) : PersistentState() {
         // Default constructor required by hibernate.
-        constructor() : this("", "")
+        constructor() : this("", "", "")
     }
 }

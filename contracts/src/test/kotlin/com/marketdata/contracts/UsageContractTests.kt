@@ -58,6 +58,7 @@ class UsageContractTests {
 
                 val distDataSet = DistributableDataSetState("LSE L1",
                         CHARLIE.party,
+                        BOB.party,
                         dataSetPointer,
                         listOf(distPrices),
                         distTandCpointer)
@@ -67,11 +68,11 @@ class UsageContractTests {
                                 DistributableDataSetState::class.java)
 
                 val signedDataTandCs =
-                        SignedTermsAndConditionsState("StandardTerms", ALICE.party, dataTandCpointer)
+                        SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, dataTandCpointer)
                 val signedDataTandCsPointer =
                         LinearPointer(signedDataTandCs.linearId, SignedTermsAndConditionsState::class.java)
                 val signedDistTandCs =
-                        SignedTermsAndConditionsState("DistributableTerms", ALICE.party, distTandCpointer)
+                        SignedTermsAndConditionsState("DistributableTerms", distTandC.issuer, ALICE.party, distTandCpointer)
                 val signedDistTandCsPointer =
                         LinearPointer(signedDistTandCs.linearId, SignedTermsAndConditionsState::class.java)
 
@@ -106,7 +107,7 @@ class UsageContractTests {
 
                 output(UsageContract.ID, usage)
 
-                command(listOf(ALICE.publicKey, BOB.publicKey, CHARLIE.publicKey),
+                command(listOf(ALICE.publicKey),
                         UsageContract.Commands.Issue())
 
                 this.verifies()

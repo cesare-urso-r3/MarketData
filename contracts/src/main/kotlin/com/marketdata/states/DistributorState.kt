@@ -12,15 +12,26 @@ import net.corda.core.node.services.AttachmentId
 import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
+import net.corda.core.serialization.CordaSerializable
 import java.time.LocalDate
 
+@CordaSerializable
+enum class DistributorContractState {
+    PROPOSED, SIGNED
+}
+
 @BelongsToContract(DistributorContract::class)
-class DistributorState(val provider: Party,
+data class DistributorState(val provider: Party,
                        val redistributor: Party,
                        val termsAndConditions: LinearPointer<SignedTermsAndConditionsState>,
+                       val contractState: DistributorContractState = DistributorContractState.PROPOSED,
                        override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState  { //QueryableState
 
     override val participants: List<Party> get() = listOf(provider, redistributor)
+
+     fun withSignedStatus() : DistributorState {
+        return this.copy(contractState = DistributorContractState.SIGNED, linearId = linearId)
+    }
 //
 //    override fun generateMappedObject(schema: MappedSchema): PersistentState {
 //        return when (schema) {

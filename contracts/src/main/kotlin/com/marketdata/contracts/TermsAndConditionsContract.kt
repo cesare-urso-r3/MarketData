@@ -1,17 +1,13 @@
 package com.marketdata.contracts
 
-import com.marketdata.states.DataSetResponseState
 import com.marketdata.states.DataSetState
 import com.marketdata.states.TermsAndConditionsState
-import com.marketdata.states.UsageState
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.Requirements.using
-import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.contracts.requireSingleCommand
 import net.corda.core.node.services.AttachmentId
 import net.corda.core.transactions.LedgerTransaction
-import java.util.jar.JarInputStream
 
 class TermsAndConditionsContract : Contract {
     companion object {
