@@ -1,11 +1,12 @@
 package com.marketdata.contracts
 
+import com.marketdata.data.PricingParameter
+import com.marketdata.states.DataSetState
 import com.marketdata.states.DistributableDataSetState
-import net.corda.core.contracts.CommandData
-import net.corda.core.contracts.Contract
+import com.marketdata.states.TermsAndConditionsState
+import net.corda.core.contracts.*
 import net.corda.core.contracts.Requirements.using
-import net.corda.core.contracts.TypeOnlyCommandData
-import net.corda.core.contracts.requireSingleCommand
+import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
 
 class DistributableDataSetContract : Contract {
@@ -33,6 +34,15 @@ class DistributableDataSetContract : Contract {
                         cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
 
                 "The dataSet name cannot be empty" using ( outputState.dataSetName.isNotEmpty() )
+
+                val dataSet = outputState.dataSet.resolveToState(tx)
+
+                "The data set name ${outputState.dataSetName} does not match the supplied data set ${dataSet.name}" using
+                        (outputState.dataSetName == dataSet.name )
+
+
+                "The data set provider ${outputState.provider} does not match the supplied data set ${dataSet.provider}" using
+                        (outputState.provider == dataSet.provider )
 
             }
             is Commands.Revoke -> {

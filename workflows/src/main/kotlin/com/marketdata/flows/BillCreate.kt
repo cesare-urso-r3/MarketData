@@ -2,19 +2,14 @@ package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.BillingContract
-import com.marketdata.contracts.SignedTermsAndConditionsContract
-import com.marketdata.data.PricingParameter
-import com.marketdata.schema.TermsAndConditionsSchemaV1
 import com.marketdata.schema.UsageSchemaV1
 import com.marketdata.states.*
 import net.corda.core.contracts.*
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
-import net.corda.core.node.ServiceHub
 import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.node.services.vault.QueryCriteria.*
 import net.corda.core.node.services.vault.builder
-import net.corda.core.transactions.LedgerTransaction
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -24,7 +19,10 @@ import net.corda.core.utilities.ProgressTracker
 // *********
 @InitiatingFlow
 @StartableByRPC
-class BillCreate(val fromDate: String, val toDate: String, val partyToBill : Party) : FlowLogic<SignedTransaction>() {
+class BillCreate(private val fromDate: String,
+                 private val toDate: String,
+                 private val partyToBill : Party) : FlowLogic<SignedTransaction>() {
+
     override val progressTracker = ProgressTracker()
 
     @Suspendable
@@ -33,9 +31,6 @@ class BillCreate(val fromDate: String, val toDate: String, val partyToBill : Par
         val cmd = BillingContract.Commands.Create()
 
         val usages = getUsageForPeriod(partyToBill, fromDate, toDate)
-
-        println("USAGES $usages")
-
         val billAmount = calculateBill(usages)
 
         val billState = BillingState(fromDate, toDate, ourIdentity, partyToBill, billAmount)
@@ -52,23 +47,22 @@ class BillCreate(val fromDate: String, val toDate: String, val partyToBill : Par
         val sessions = (billState.participants - ourIdentity)
                 .map { initiateFlow(it) }
 
-        return subFlow(FinalityFlow(ourSignedTx, sessions));
+        return subFlow(FinalityFlow(ourSignedTx, sessions))
     }
 
     fun getUsageForPeriod( billableParty: Party, startDate : String, endDate : String) : List<UsageState> {
         return builder {
 
-            println("GET USAGE - $startDate $endDate  - $billableParty - $ourIdentity")
             val startDateIdx = UsageSchemaV1.PersistentUsage::date.greaterThanOrEqual(startDate)
             val endDateIdx = UsageSchemaV1.PersistentUsage::date.lessThanOrEqual(endDate)
             val partyIdx = UsageSchemaV1.PersistentUsage::subscriberName.equal(billableParty.name.toString())
             val redistIdx = UsageSchemaV1.PersistentUsage::redistributorName.equal(ourIdentity.name.toString())
-//
+
             val customCriteria1 = VaultCustomQueryCriteria(startDateIdx)
             val customCriteria2 = VaultCustomQueryCriteria(endDateIdx)
             val customCriteria3 = VaultCustomQueryCriteria(partyIdx)
             val customCriteria4 = VaultCustomQueryCriteria(redistIdx)
-//
+
             val criteria = QueryCriteria.VaultQueryCriteria()
                     .and(customCriteria1
                             .and(customCriteria2
@@ -93,12 +87,12 @@ class BillCreate(val fromDate: String, val toDate: String, val partyToBill : Par
 
             if (it.paidUsageState != null) {
                 providerCharges += distDataSet.pricingParameters
-                        .map { pParam -> pParam.perUser }
+                        .map { pParam -> pParam.monthlyCostPerUser }
                         .reduce{sum, price -> sum + price }
             }
 
             distributorCharges += dataSet.pricingParameters
-                    .map { pParam -> pParam.perUser }
+                    .map { pParam -> pParam.monthlyCostPerUser }
                     .reduce{sum, price -> sum + price }
         }
 

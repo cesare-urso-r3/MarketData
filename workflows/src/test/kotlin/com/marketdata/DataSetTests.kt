@@ -76,6 +76,7 @@ class DataSetTests {
         utils.createDataSet(a, dataSet, tandcState, pricing)
 
         val states = a.services.vaultService.queryBy(DataSetState::class.java).states
+        states.forEach { println( it.state.data ) }
         assert(states.isNotEmpty())
     }
 

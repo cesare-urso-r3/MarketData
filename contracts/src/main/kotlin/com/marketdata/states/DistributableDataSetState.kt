@@ -1,19 +1,16 @@
 package com.marketdata.states
 
-import com.marketdata.contracts.DataSetContract
 import com.marketdata.contracts.DistributableDataSetContract
-import com.marketdata.contracts.UsageContract
 import com.marketdata.data.PricingParameter
-import com.marketdata.schema.DataSetSchemaV1
 import com.marketdata.schema.DistributableDataSetSchemaV1
-import net.corda.core.contracts.*
-import net.corda.core.identity.CordaX500Name
+import net.corda.core.contracts.BelongsToContract
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.LinearState
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.Party
-import net.corda.core.node.services.AttachmentId
 import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
-import java.time.LocalDate
 
 @BelongsToContract(DistributableDataSetContract::class)
 class DistributableDataSetState(val dataSetName : String,
@@ -37,9 +34,15 @@ class DistributableDataSetState(val dataSetName : String,
         }
     }
 
-    override fun toString() : String {
-        return  "[$dataSetName/$provider/$redistributor]"
-    }
-
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(DistributableDataSetSchemaV1)
+
+    override fun toString() : String {
+        return stateToString(
+                    mapOf(
+                            "DataSet" to dataSetName,
+                            "Provider" to provider.name.toString(),
+                            "Redistributor" to redistributor.name.toString()
+                    )
+        )
+    }
 }

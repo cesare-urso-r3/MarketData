@@ -2,16 +2,12 @@ package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.DistributionContract
-import com.marketdata.schema.DataSetSchemaV1
-import com.marketdata.states.DataSetState
 import com.marketdata.states.DistributionState
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.ReferencedStateAndRef
 import net.corda.core.contracts.StateAndContract
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
-import net.corda.core.node.services.vault.QueryCriteria
-import net.corda.core.node.services.vault.builder
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 import net.corda.core.utilities.unwrap
@@ -21,26 +17,14 @@ import net.corda.core.utilities.unwrap
 // *********
 @InitiatingFlow
 @StartableByRPC
-class DataSetRequestInitiator(val requestFrom : Party, val dataSet: String) : FlowLogic<Unit>() {
+class DataSetRequestInitiator(private val requestFrom : Party,
+                              private val dataSet: String) : FlowLogic<Unit>() {
+
     override val progressTracker = ProgressTracker()
 
     @Suspendable
     override fun call() {
-        val results = builder {
-            val dataSetIdx = DataSetSchemaV1.PersistentDataSet::name.equal(dataSet)
-            val providerIdx = DataSetSchemaV1.PersistentDataSet::providerName.equal(ourIdentity.toString())
-
-            val customCriteria1 = QueryCriteria.VaultCustomQueryCriteria(providerIdx)
-            val customCriteria2 = QueryCriteria.VaultCustomQueryCriteria(dataSetIdx)
-
-            val criteria = QueryCriteria.VaultQueryCriteria()
-                    .and(customCriteria1
-                            .and(customCriteria2))
-
-            serviceHub.vaultService.queryBy(DataSetState::class.java,criteria)
-        }.states
-
-        if (results.size == 0) {
+        if (!serviceHub.vaultService.hasDataSet(dataSet, requestFrom)) {
             val counterpartySession = initiateFlow(requestFrom)
             counterpartySession.send(dataSet)
         }
@@ -62,21 +46,9 @@ class DataSetResponseInitiator(val requestor : Party, val dataSet: String) : Flo
 
     @Suspendable
     override fun call() {
+
         // now get the state with that name
-        val dataSetStateAndRef = builder {
-            val dataSetIdx = DataSetSchemaV1.PersistentDataSet::name.equal(dataSet)
-            val providerIdx = DataSetSchemaV1.PersistentDataSet::providerName.equal(ourIdentity.toString())
-
-            val customCriteria1 = QueryCriteria.VaultCustomQueryCriteria(providerIdx)
-            val customCriteria2 = QueryCriteria.VaultCustomQueryCriteria(dataSetIdx)
-
-            val criteria = QueryCriteria.VaultQueryCriteria()
-                    .and(customCriteria1
-                            .and(customCriteria2))
-
-            serviceHub.vaultService.queryBy(DataSetState::class.java,criteria)
-        }.states.single()
-
+        val dataSetStateAndRef = serviceHub.vaultService.getDataSetStateAndRef(dataSet, ourIdentity)
 
         val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
         val cmd = DistributionContract.Commands.Distribute()

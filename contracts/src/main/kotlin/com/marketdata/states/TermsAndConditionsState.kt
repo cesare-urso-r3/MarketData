@@ -1,19 +1,14 @@
 package com.marketdata.states
 
-import com.marketdata.contracts.DataSetContract
 import com.marketdata.contracts.TermsAndConditionsContract
-import com.marketdata.contracts.UsageContract
-import com.marketdata.data.PricingParameter
-import com.marketdata.schema.DataSetSchemaV1
 import com.marketdata.schema.TermsAndConditionsSchemaV1
-import net.corda.core.contracts.*
-import net.corda.core.identity.CordaX500Name
+import net.corda.core.contracts.BelongsToContract
+import net.corda.core.contracts.LinearState
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.Party
 import net.corda.core.node.services.AttachmentId
 import net.corda.core.schemas.MappedSchema
-import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
-import java.time.LocalDate
 
 @BelongsToContract(TermsAndConditionsContract::class)
 class TermsAndConditionsState(val name : String,
@@ -22,8 +17,6 @@ class TermsAndConditionsState(val name : String,
                               override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState, QueryableState {
 
     override val participants: List<Party> get() = listOf(issuer)
-
-    override fun toString() = "$name / ${issuer.name} ($termsAndConditions)"
 
     override fun generateMappedObject(schema: MappedSchema): TermsAndConditionsSchemaV1.PersistentTandC {
         return when (schema) {
@@ -36,4 +29,14 @@ class TermsAndConditionsState(val name : String,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(TermsAndConditionsSchemaV1)
+
+    override fun toString() : String {
+        return stateToString(
+                mapOf(
+                        "T&C name" to name,
+                        "Issuer" to issuer.name.toString(),
+                        "Attachment" to termsAndConditions.toString()
+                )
+        )
+    }
 }

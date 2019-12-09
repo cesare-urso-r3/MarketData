@@ -17,10 +17,10 @@ import net.corda.core.utilities.ProgressTracker
 // *********
 @InitiatingFlow
 @StartableByRPC
-class DistributableDataSetIssue(val name: String,
-                                val dataSet: DataSetState,
-                                val tandc: TermsAndConditionsState,
-                                val pricing : PricingParameter) : FlowLogic<SignedTransaction>() {
+class DistributableDataSetIssue(private val name: String,
+                                private val dataSet: DataSetState,
+                                private val tandc: TermsAndConditionsState,
+                                private val pricing : PricingParameter) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable

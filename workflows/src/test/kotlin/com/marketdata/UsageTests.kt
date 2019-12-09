@@ -129,19 +129,19 @@ class UsageTests {
             network.runNetwork()
             futureloop.getOrThrow()
         }
-
-        utils.issuePermission(dataSet, a, d, c, tandCAttachment, tandCName, r2tandCAttachment, r2tandCName)
-
-        println("*** DOUBLE_BILL ***")
-        utils.runFlowOnBehalfOf(c, UsageIssue(dataSet, a.getDefaultId(), d.getDefaultId(), "DOUBLE_BILL" ))
-        c.services.vaultService
-                .queryBy(UsageReceiptState::class.java).states.filter { it.state.data.userName == "DOUBLE_BILL" }
-                .forEach { println("${it.state.data.userName} ") }
-
-        val usageReceipt = c.services.vaultService
-                .queryBy(UsageReceiptState::class.java).states.filter { it.state.data.userName == "DOUBLE_BILL" }.single().state.data
-
-        utils.runFlowOnBehalfOf(c, UsageIssue(dataSet, a.getDefaultId(), b.getDefaultId(), "DOUBLE_BILL", usageReceipt ))
+//
+//        utils.issuePermission(dataSet, a, d, c, tandCAttachment, tandCName, r2tandCAttachment, r2tandCName)
+//
+//        println("*** DOUBLE_BILL ***")
+//        utils.runFlowOnBehalfOf(c, UsageIssue(dataSet, a.getDefaultId(), d.getDefaultId(), "DOUBLE_BILL" ))
+//        c.services.vaultService
+//                .queryBy(UsageReceiptState::class.java).states.filter { it.state.data.userName == "DOUBLE_BILL" }
+//                .forEach { println("${it.state.data.userName} ") }
+//
+//        val usageReceipt = c.services.vaultService
+//                .queryBy(UsageReceiptState::class.java).states.filter { it.state.data.userName == "DOUBLE_BILL" }.single().state.data
+//
+//        utils.runFlowOnBehalfOf(c, UsageIssue(dataSet, a.getDefaultId(), b.getDefaultId(), "DOUBLE_BILL", usageReceipt ))
 
 
         val a2States = a.services.vaultService.queryBy(UsageState::class.java).states

@@ -28,9 +28,9 @@ class DistributionContract : Contract {
 
                 val outputState = tx.outputStates.single() as DistributionState
 
-                "Sending party needs to sign" using (cmd.signers.toSet() == setOf(outputState.from.owningKey))
+                "Cannot distribute to self" using (outputState.from != outputState.to)
 
-                //TODO: Is there any meaningful check on reference states?
+                "Sending party needs to sign" using (cmd.signers.toSet() == setOf(outputState.from.owningKey))
             }
         }
     }

@@ -17,7 +17,7 @@ class PermissionRequestContract : Contract {
 
     interface Commands : CommandData {
         class Issue() : TypeOnlyCommandData(), Commands
-        class Revoke : TypeOnlyCommandData(), Commands
+        class Revoke : TypeOnlyCommandData(), Commands // TODO: Implement
     }
 
     override fun verify(tx: LedgerTransaction) {
@@ -31,29 +31,33 @@ class PermissionRequestContract : Contract {
 
                 val outputState = tx.outputStates.single() as PermissionRequestState
 
-//                println("Signed by: ${cmd.signers.map { it.toString() }}")
-//                println("Provider: ${outputState.provider.owningKey}")
-//                println("Subscriber: ${outputState.subscriber.owningKey}")
-//                println("Redistributor: ${outputState.dataChargeOwner.owningKey}")
-
                 "All parties must sign" using (
                         cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
 
                 "The dataSet name cannot be empty" using ( outputState.dataSetName.isNotEmpty() )
 
-                val distDataSet = outputState.distributableDataSet.resolve(tx).state.data
-                val dataSet = distDataSet.dataSet.resolve(tx).state.data
+                val distDataSet = outputState.distributableDataSet.resolveToState(tx)
+                val dataSet = distDataSet.dataSet.resolveToState(tx)
 
-                val distTandCs = distDataSet.termsAndConditions.resolve(tx).state.data
-                val dataTandCs = dataSet.termsAndConditions.resolve(tx).state.data
+                val distTandCs = distDataSet.termsAndConditions.resolveToState(tx)
+                val dataTandCs = dataSet.termsAndConditions.resolveToState(tx)
 
-                val signedDistTandCs = outputState.redistributorTandCs.resolve(tx).state.data
-                val signedDataTandCs = outputState.providerTandCs.resolve(tx).state.data
+                val signedDistTandCs = outputState.redistributorTandCs.resolveToState(tx)
+                val signedDataTandCs = outputState.providerTandCs.resolveToState(tx)
 
-                "The supplied redistributor terms and conditions are incorrect" using
+                "The supplied redistributor terms and conditions must be issued by the redistributor" using
+                        (distTandCs.issuer == outputState.redistributor)
+                "The supplied data terms and conditions must be issued by the provider" using
+                        (dataTandCs.issuer == outputState.provider)
+
+                "The supplied signed redistributor terms and conditions name is incorrect" using
                         (signedDistTandCs.name == distTandCs.name)
-                "The supplied provider terms and conditions are incorrect" using
+                "The supplied signed redistributor terms and conditions issuer is incorrect" using
+                        (signedDistTandCs.issuer == distTandCs.issuer)
+                "The supplied signed provider terms and conditions name is incorrect" using
                         (signedDataTandCs.name == dataTandCs.name)
+                "The supplied signed provider terms and conditions issuer is incorrect" using
+                        (signedDataTandCs.issuer == dataTandCs.issuer)
 
                 "The redistributor T&Cs must be signed by the subscriber in this request" using
                         (signedDistTandCs.signer == outputState.subscriber)
@@ -62,8 +66,6 @@ class PermissionRequestContract : Contract {
 
                 "The dataSet requested does not match the provided dataSet details" using
                         ( dataSet.name == outputState.dataSetName )
-
-                //TODO: there may be other references to cross-reference for integrity
             }
             else -> {
                 throw IllegalArgumentException("Unknown command: ${this.toString()}")

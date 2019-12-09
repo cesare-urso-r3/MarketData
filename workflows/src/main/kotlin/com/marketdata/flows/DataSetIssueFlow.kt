@@ -3,14 +3,9 @@ package com.marketdata.flows
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.DataSetContract
 import com.marketdata.data.PricingParameter
-import com.marketdata.schema.DataSetSchemaV1
 import com.marketdata.states.*
 import net.corda.core.contracts.*
 import net.corda.core.flows.*
-import net.corda.core.identity.Party
-import net.corda.core.node.services.vault.Builder.equal
-import net.corda.core.node.services.vault.QueryCriteria
-import net.corda.core.node.services.vault.builder
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -20,9 +15,9 @@ import net.corda.core.utilities.ProgressTracker
 // *********
 @InitiatingFlow
 @StartableByRPC
-class DataSetIssue(val name: String,
-                   val tandc: TermsAndConditionsState,
-                   val pricing : PricingParameter) : FlowLogic<SignedTransaction>() {
+class DataSetIssue(private val name: String,
+                   private val tandc: TermsAndConditionsState,
+                   private val pricing : PricingParameter) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable
@@ -30,18 +25,8 @@ class DataSetIssue(val name: String,
         val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
         val cmd = DataSetContract.Commands.Issue()
 
-        val results = builder {
-            val nameIdx = DataSetSchemaV1.PersistentDataSet::name.equal(name)
-
-            val customCriteria1 = QueryCriteria.VaultCustomQueryCriteria(nameIdx)
-
-            val criteria = QueryCriteria.VaultQueryCriteria()
-                    .and(customCriteria1)
-
-            serviceHub.vaultService.queryBy(DataSetState::class.java,criteria)
-        }.states
-
-        check(results.isEmpty())
+        // TODO: better error message
+        check(!serviceHub.vaultService.hasDataSet(name, ourIdentity))
 
         val state = DataSetState(
                 name,
@@ -58,6 +43,6 @@ class DataSetIssue(val name: String,
         txb.verify(serviceHub)
 
         val ourSignedTx = serviceHub.signInitialTransaction(txb)
-        return subFlow(FinalityFlow(ourSignedTx, emptyList()));
+        return subFlow(FinalityFlow(ourSignedTx, emptyList()))
     }
 }

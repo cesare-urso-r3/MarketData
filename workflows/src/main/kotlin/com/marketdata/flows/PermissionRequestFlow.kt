@@ -22,18 +22,18 @@ class PermissionRequest(val provider : Party, val redistributor : Party, val dat
     @Suspendable
     override fun call() {
         // now get the state with that name
-        val distDataSetStateAndRef = serviceHub.vaultService.GetDistributableDataSet(
+        val distDataSetStateAndRef = serviceHub.vaultService.getDistributableDataSetStateAndRef(
                 provider,
                 redistributor,
                 dataSetName)
 
         val distDataSet = distDataSetStateAndRef.state.data
         val requiredRedistributorTandC = distDataSet.termsAndConditions.resolve(serviceHub).state.data
-        val signedRedistTandC = serviceHub.vaultService.GetSignedTandCStateAndRef(requiredRedistributorTandC, ourIdentity)
+        val signedRedistTandC = serviceHub.vaultService.getSignedTandCStateAndRef(requiredRedistributorTandC, ourIdentity)
 
         val dataSet = distDataSet.dataSet.resolve(serviceHub).state.data
         val requiredProviderTandC = dataSet.termsAndConditions.resolve(serviceHub).state.data
-        val signedProviderTandC = serviceHub.vaultService.GetSignedTandCStateAndRef(requiredProviderTandC, ourIdentity)
+        val signedProviderTandC = serviceHub.vaultService.getSignedTandCStateAndRef(requiredProviderTandC, ourIdentity)
 
         val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
         val cmd = PermissionRequestContract.Commands.Issue()

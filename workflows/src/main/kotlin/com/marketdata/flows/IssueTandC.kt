@@ -21,6 +21,7 @@ import net.corda.core.node.services.vault.builder
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
+import net.corda.core.utilities.contextLogger
 
 // *********
 // * Flows *
@@ -30,40 +31,26 @@ import net.corda.core.utilities.ProgressTracker
 class IssueTandC(val attachmentId: AttachmentId, val attachmentName : String) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
+    companion object {
+        private val log = contextLogger()
+    }
+
     @Suspendable
     override fun call() : SignedTransaction{
-        val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
-
         val cmd = TermsAndConditionsContract.Commands.Issue(attachmentId)
+        val tAndCState = TermsAndConditionsState(attachmentName, ourIdentity, attachmentId)
 
-        val tandCState = TermsAndConditionsState(attachmentName, ourIdentity, attachmentId)
-
+        val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
         txb.withItems(
-                StateAndContract(tandCState, TermsAndConditionsContract.ID ),
-                Command(cmd, tandCState.participants.map { it.owningKey }),
+                StateAndContract(tAndCState, TermsAndConditionsContract.ID ),
+                Command(cmd, listOf(ourIdentity.owningKey)),
                 attachmentId
         )
 
         txb.verify(serviceHub)
 
         val ourSignedTx = serviceHub.signInitialTransaction(txb)
-        val sessions = ( tandCState.participants - ourIdentity)
-                .map { initiateFlow(it) }
 
-
-        println( "participants" )
-        println( ( tandCState.participants - ourIdentity) )
-        println( serviceHub.myInfo.legalIdentities )
-        println(ourSignedTx.tx.outputStates.flatMap { it.participants } )
-
-        return subFlow(FinalityFlow(ourSignedTx, sessions));
-    }
-}
-
-@InitiatedBy(IssueTandC::class)
-class IssueTandCResponder(val counterpartySession: FlowSession) : FlowLogic<SignedTransaction>() {
-    @Suspendable
-    override fun call() : SignedTransaction {
-        return subFlow(ReceiveFinalityFlow(counterpartySession))
+        return subFlow(FinalityFlow(ourSignedTx, emptyList()))
     }
 }

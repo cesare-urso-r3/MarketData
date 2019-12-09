@@ -6,7 +6,6 @@ import net.corda.core.contracts.Contract
 import net.corda.core.contracts.Requirements.using
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.contracts.requireSingleCommand
-import net.corda.core.node.services.AttachmentId
 import net.corda.core.transactions.LedgerTransaction
 
 class DataSetContract : Contract {
@@ -17,12 +16,6 @@ class DataSetContract : Contract {
     interface Commands : CommandData {
         class Issue() : TypeOnlyCommandData(), Commands
         class Revoke : TypeOnlyCommandData(), Commands
-        // TODO: class Revoke : TypeOnlyCommandData(), Commands
-    }
-
-    abstract class CommandWithAttachmentId(val attachmentId: AttachmentId) : CommandData {
-        override fun equals(other: Any?) = other?.javaClass == javaClass
-        override fun hashCode() = javaClass.name.hashCode()
     }
 
     override fun verify(tx: LedgerTransaction) {
@@ -36,13 +29,13 @@ class DataSetContract : Contract {
 
                 val outputState = tx.outputStates.single() as DataSetState
 
-                "The issuer must sign" using (
+                "Only the issuer must sign" using (
                         cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
 
                 "The dataSet name cannot be empty" using ( outputState.name.isNotEmpty() )
 
                 "The terms and conditions must be issued by the provider" using (
-                        outputState.termsAndConditions.resolve(tx).state.data.issuer == outputState.provider
+                        outputState.termsAndConditions.resolveToState(tx).issuer == outputState.provider
                         )
 
                 // TODO: validate the data set is correctly named
@@ -61,21 +54,6 @@ class DataSetContract : Contract {
                 "The dataSet name cannot be empty" using ( inputState.name.isNotEmpty() )
 
             }
-//            is Commands.List -> {
-//                "No inputs should be consumed when browsing a data set." using (tx.inputStates.isEmpty())
-//
-//                "Only one output state should be created when issuing data set." using (tx.outputStates.size == 1)
-//
-//                "Only one output state should be created when issuing data set." using (
-//                        tx.outputStates.single() is DataSetResponseState)
-//
-//                val outputState = tx.outputStates.single() as DataSetResponseState
-//
-//                "All referenced states must be DataSetStates" using (
-//                            tx.referenceStates.all { it is DataSetState }
-//                        )
-//
-//            }
             else -> {
                 throw IllegalArgumentException("Unknown command: ${this.toString()}")
             }

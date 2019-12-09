@@ -36,10 +36,10 @@ class SignedTermsAndConditionsContract : Contract {
 
                 "The dataSet name cannot be empty" using ( outputState.name.isNotEmpty() )
 
-                val tandc = outputState.termsAndConditions.resolve(tx).state.data
+                val tandc = outputState.termsAndConditions.resolveToState(tx)
 
                 "The specified name does not match the attached terms and conditions" using (tandc.name == outputState.name)
-
+                "The specified issue does not match the attached terms and conditions issuer" using (tandc.issuer == outputState.issuer)
             }
             is Commands.Revoke -> {
 

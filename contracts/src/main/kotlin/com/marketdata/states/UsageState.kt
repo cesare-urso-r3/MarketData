@@ -2,8 +2,10 @@ package com.marketdata.states
 
 import com.marketdata.contracts.UsageContract
 import com.marketdata.schema.UsageSchemaV1
-import net.corda.core.contracts.*
-import net.corda.core.identity.AbstractParty
+import net.corda.core.contracts.BelongsToContract
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.LinearState
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.Party
 import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
@@ -39,6 +41,15 @@ class UsageState(val dataSetName : String,
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(UsageSchemaV1)
 
     override fun toString(): String {
-        return "USAGE_STATE $dataSetName $provider $subscriber $redistributor $date $userName"
+        return stateToString(
+                mapOf(
+                        "Subscriber" to subscriber.name.toString(),
+                        "DataSet" to dataSetName,
+                        "Provider" to provider.name.toString(),
+                        "Redistributor" to redistributor.name.toString(),
+                        "Date" to date,
+                        "User" to userName
+                )
+        )
     }
 }
