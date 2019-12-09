@@ -3,12 +3,14 @@ package com.marketdata.flows
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.BillingContract
 import com.marketdata.schema.UsageSchemaV1
-import com.marketdata.states.*
-import net.corda.core.contracts.*
+import com.marketdata.states.BillingState
+import com.marketdata.states.UsageState
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.StateAndContract
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.vault.QueryCriteria
-import net.corda.core.node.services.vault.QueryCriteria.*
+import net.corda.core.node.services.vault.QueryCriteria.VaultCustomQueryCriteria
 import net.corda.core.node.services.vault.builder
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder

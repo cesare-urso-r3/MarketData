@@ -2,28 +2,26 @@ package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.UsageContract
-import com.marketdata.schema.DataSetSchemaV1
 import com.marketdata.schema.PermissionSchemaV1.PersistentPermission
-import com.marketdata.schema.UsageSchemaV1
 import com.marketdata.states.*
 import net.corda.confidential.IdentitySyncFlow
-import net.corda.core.contracts.*
+import net.corda.confidential.SwapIdentitiesFlow
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.StateAndContract
+import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
+import net.corda.core.identity.AnonymousParty
 import net.corda.core.identity.Party
 import net.corda.core.node.services.Vault
-import net.corda.core.node.services.vault.QueryCriteria
-import net.corda.core.node.services.vault.QueryCriteria.*
+import net.corda.core.node.services.vault.QueryCriteria.VaultCustomQueryCriteria
+import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria
 import net.corda.core.node.services.vault.builder
-import net.corda.core.schemas.QueryableState
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
-import net.corda.core.utilities.ProgressTracker
-import java.time.Instant
-import java.time.LocalDate
-import net.corda.confidential.SwapIdentitiesFlow
-import net.corda.core.identity.AnonymousParty
 import net.corda.core.transactions.WireTransaction
-import java.util.LinkedHashMap
+import net.corda.core.utilities.ProgressTracker
+import java.util.*
 
 // *********
 // * Flows *

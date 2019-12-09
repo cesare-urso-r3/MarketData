@@ -1,13 +1,18 @@
 package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
-import com.marketdata.contracts.DataSetContract
 import com.marketdata.contracts.DistributableDataSetContract
 import com.marketdata.data.PricingParameter
-import com.marketdata.states.*
-import net.corda.core.contracts.*
-import net.corda.core.flows.*
-import net.corda.core.identity.Party
+import com.marketdata.states.DataSetState
+import com.marketdata.states.DistributableDataSetState
+import com.marketdata.states.TermsAndConditionsState
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.StateAndContract
+import net.corda.core.flows.FinalityFlow
+import net.corda.core.flows.FlowLogic
+import net.corda.core.flows.InitiatingFlow
+import net.corda.core.flows.StartableByRPC
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker

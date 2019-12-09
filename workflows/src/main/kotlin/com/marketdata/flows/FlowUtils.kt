@@ -8,18 +8,15 @@ import com.marketdata.states.DataSetState
 import com.marketdata.states.DistributableDataSetState
 import com.marketdata.states.SignedTermsAndConditionsState
 import com.marketdata.states.TermsAndConditionsState
-import com.sun.org.apache.xpath.internal.operations.Bool
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.identity.Party
 import net.corda.core.node.ServiceHub
 import net.corda.core.node.services.VaultService
-import net.corda.core.node.services.vault.Builder.equal
 import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.node.services.vault.builder
 import net.corda.core.serialization.CordaSerializable
-import net.corda.core.transactions.LedgerTransaction
 
 // Functions and extension helpers for flow related functions
 

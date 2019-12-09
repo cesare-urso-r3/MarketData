@@ -2,8 +2,11 @@ package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.SignedTermsAndConditionsContract
-import com.marketdata.states.*
-import net.corda.core.contracts.*
+import com.marketdata.states.SignedTermsAndConditionsState
+import com.marketdata.states.TermsAndConditionsState
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.StateAndContract
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.SignedTransaction

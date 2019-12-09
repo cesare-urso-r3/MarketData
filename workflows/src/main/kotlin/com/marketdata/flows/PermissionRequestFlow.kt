@@ -2,8 +2,13 @@ package com.marketdata.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.PermissionRequestContract
-import com.marketdata.states.*
-import net.corda.core.contracts.*
+import com.marketdata.states.DistributableDataSetState
+import com.marketdata.states.PermissionRequestState
+import com.marketdata.states.SignedTermsAndConditionsState
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.LinearPointer
+import net.corda.core.contracts.StateAndContract
+import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.SignedTransaction
