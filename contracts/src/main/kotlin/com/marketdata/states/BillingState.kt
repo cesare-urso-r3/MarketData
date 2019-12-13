@@ -19,12 +19,14 @@ data class BillingState(val startDate : String,
         get() = listOf(from, to)
 
     override fun toString(): String {
-        return "Billing State:\n" +
-                "From: $from\n" +
-                "To: $to\n" +
+        return  "+---------------+\n" +
+                "| Billing State |\n" +
+                "+---------------+\n" +
+                "From : $from\n" +
+                "To   : $to\n" +
                 "Start: $startDate\n" +
-                "End: $endDate\n" +
-                "=================" +
-                "Amount: $amount\n\n"
+                "End  : $endDate\n" +
+                "=================\n" +
+                "Total: $amount\n\n"
     }
 }

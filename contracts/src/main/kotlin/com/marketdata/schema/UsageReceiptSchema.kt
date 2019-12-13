@@ -8,21 +8,28 @@ import javax.persistence.Entity
 import javax.persistence.Table
 
 
-object UsageSchema
+object UsageReceiptSchema
 
-object UsageSchemaV1 : MappedSchema(
-        schemaFamily = UsageSchema.javaClass,
+object UsageReceiptSchemaV1 : MappedSchema(
+        schemaFamily = UsageReceiptSchema.javaClass,
         version = 1,
-        mappedTypes = listOf(PersistentUsage::class.java)) {
+        mappedTypes = listOf(PersistentUsageReceipt::class.java)) {
 
     @Entity
-    @Table(name = "usage_states")
-    class PersistentUsage(
+    @Table(name = "usage_receipt_states")
+    class PersistentUsageReceipt(
+
+            @Column(name = "dataset")
+            var dataSetName: String,
+
+            @Column(name = "provider")
+            var providerName: String,
+
             @Column(name = "subscriber")
             var subscriberName: String,
 
-            @Column(name = "redistributor")
-            var redistributorName: String,
+            @Column(name = "userName")
+            var userName: String,
 
             @Column(name = "date")
             var date: String
@@ -30,6 +37,8 @@ object UsageSchemaV1 : MappedSchema(
     ) : PersistentState() {
         // Default constructor required by hibernate.
         constructor() : this("",
+                "",
+                "",
                 "",
                 "")
     }

@@ -87,13 +87,13 @@ class BillCreate(private val fromDate: String,
             val distDataSet = permState.distributableDataSet.resolveToState(serviceHub)
             val dataSet = distDataSet.dataSet.resolveToState(serviceHub)
 
-            if (it.paidUsageState != null) {
-                providerCharges += distDataSet.pricingParameters
+            if (it.paidUsageState == null) {
+                providerCharges += dataSet.pricingParameters
                         .map { pParam -> pParam.monthlyCostPerUser }
                         .reduce{sum, price -> sum + price }
             }
 
-            distributorCharges += dataSet.pricingParameters
+            distributorCharges += distDataSet.pricingParameters
                     .map { pParam -> pParam.monthlyCostPerUser }
                     .reduce{sum, price -> sum + price }
         }

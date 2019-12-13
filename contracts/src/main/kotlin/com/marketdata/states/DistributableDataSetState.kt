@@ -41,7 +41,8 @@ class DistributableDataSetState(val dataSetName : String,
                     mapOf(
                             "DataSet" to dataSetName,
                             "Provider" to provider.name.toString(),
-                            "Redistributor" to redistributor.name.toString()
+                            "Redistributor" to redistributor.name.toString(),
+                            "Pricing" to pricingParameters.map { it.monthlyCostPerUser }.toString()
                     )
         )
     }

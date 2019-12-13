@@ -3,41 +3,33 @@ autonumber
 title Market Data
 
 group Provider Setup
-Provider -> Provider : Create redistributor T&Cs
-note right: [T&C1] These are the provider's T&C's that they will require redistributors to sign
 Provider -> Provider : Create subscriber T&Cs
-note right: [T&C2] These are the provider's T&C's that they will require subscribers to sign
+note right: [T&C1] These are the provider's T&C's that they will require subscribers to sign
 Provider -> Provider : Create data sets
 end
 
 group Redistributor Setup
-Redistributor -> Provider : Request redistributor T&Cs
-activate Provider
-Provider --> Redistributor : Send redistributor T&Cs
-deactivate Provider
-note right: T&C1 and T&C2
-Redistributor -> Redistributor : Sign redistributor T&Cs
-note right: T&C1
+Redistributor -> Provider : Download dataset
 Redistributor -> Redistributor : Create subscriber T&Cs
-note right: [T&C3] These are the redistributors T&C's that redistributors will require subscribers to sign
+note right: T&C2
+Redistributor -> Redistributor : Create distributable data set
 end
 
 group Subscriber Permission
-Subscriber -> Redistributor : Request data sets
+Subscriber -> Redistributor : Download distributable data sets
 activate Redistributor
-Redistributor --> Subscriber : Send data sets
+Redistributor --> Subscriber : Send distributable data sets
 deactivate Redistributor
-note right: The redistributor also sends the signed redistributor T&Cs from [7] so that the subscriber\ncan verify that they are permitted to redistribute
 Subscriber -> Redistributor : Request specific data set
 activate Redistributor
 Redistributor --> Subscriber : Send data set and associated T&Cs
 deactivate Redistributor
 Subscriber -> Subscriber: Sign all T&Cs
-note right: T&C2 and T&C3
+note right: T&C1 and T&C2
 
 Subscriber -> Redistributor : Request permission
 activate Subscriber
-note right: Include the signed T&Cs from [12]
+note right: Include the signed T&Cs from [10]
 Subscriber -> Provider
 deactivate Subscriber
 end

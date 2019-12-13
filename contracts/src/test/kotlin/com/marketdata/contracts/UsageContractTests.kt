@@ -19,6 +19,7 @@ import net.corda.testing.node.ledger
 import org.junit.Test
 import java.io.File
 import java.security.Permission
+import java.time.LocalDate
 
 class UsageContractTests {
 
@@ -103,7 +104,8 @@ class UsageContractTests {
                         BOB.party,
                         CHARLIE.party,
                         ALICE.party,
-                        "Adam")
+                        "Adam",
+                        LocalDate.now().toString())
 
                 output(UsageContract.ID, usage)
 

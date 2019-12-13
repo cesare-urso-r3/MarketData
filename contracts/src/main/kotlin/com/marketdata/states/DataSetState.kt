@@ -36,6 +36,7 @@ class DataSetState(val name : String,
                 mapOf(
                         "Name" to name,
                         "Provider" to provider.name.toString(),
+                        "Pricing" to pricingParameters.map { it.monthlyCostPerUser }.toString(),
                         "linearId" to linearId.toString()
                 )
         )

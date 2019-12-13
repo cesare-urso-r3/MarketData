@@ -22,7 +22,7 @@ class UsageState(val dataSetName : String,
                  val redistributor : Party,
                  val subscriber: Party,
                  val userName: String,
-                 val date : String = LocalDate.now().toString(),
+                 val date : String,
                  override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState, QueryableState {
     override val participants: List<Party> get() = setOf(provider, subscriber, redistributor).toList()
 

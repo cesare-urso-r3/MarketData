@@ -3,6 +3,8 @@ package com.marketdata.flows
 import co.paralleluniverse.fibers.Suspendable
 import com.marketdata.contracts.UsageContract
 import com.marketdata.schema.PermissionSchemaV1.PersistentPermission
+import com.marketdata.schema.UsageReceiptSchemaV1
+import com.marketdata.schema.UsageSchemaV1
 import com.marketdata.states.*
 import net.corda.confidential.IdentitySyncFlow
 import net.corda.confidential.SwapIdentitiesFlow
@@ -14,6 +16,10 @@ import net.corda.core.flows.*
 import net.corda.core.identity.AnonymousParty
 import net.corda.core.identity.Party
 import net.corda.core.node.services.Vault
+import net.corda.core.node.services.vault.Builder.equal
+import net.corda.core.node.services.vault.Builder.greaterThanOrEqual
+import net.corda.core.node.services.vault.Builder.lessThanOrEqual
+import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.node.services.vault.QueryCriteria.VaultCustomQueryCriteria
 import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria
 import net.corda.core.node.services.vault.builder
@@ -21,6 +27,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.transactions.WireTransaction
 import net.corda.core.utilities.ProgressTracker
+import java.time.LocalDate
 import java.util.*
 
 // *********
@@ -28,7 +35,7 @@ import java.util.*
 // *********
 @InitiatingFlow
 @StartableByRPC
-class UsageIssue(val dataSet: String, val provider: Party, val redistributor: Party, val userName : String, val receipt : UsageReceiptState? = null) : FlowLogic<SignedTransaction>() {
+class UsageIssue(val dataSet: String, val provider: Party, val redistributor: Party, val userName : String, val payRedistributor : Party? = null) : FlowLogic<SignedTransaction>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable
@@ -36,6 +43,7 @@ class UsageIssue(val dataSet: String, val provider: Party, val redistributor: Pa
 
         val txb = TransactionBuilder(notary = serviceHub.networkMapCache.notaryIdentities.first())
         val cmd = UsageContract.Commands.Issue()
+        val today = LocalDate.now().toString()
 
         val results = builder {
             val providerIdx = PersistentPermission::providerName.equal(provider.toString())
@@ -67,8 +75,35 @@ class UsageIssue(val dataSet: String, val provider: Party, val redistributor: Pa
 
         val permState = permStates.single().state.data
 
-        val receiptPointer = if( receipt != null ) {
-            LinearPointer(receipt.linearId, UsageReceiptState::class.java)
+        val receiptPointer = if( payRedistributor != null ) {
+
+            val usages = builder {
+
+                val provIdx = UsageReceiptSchemaV1.PersistentUsageReceipt::providerName.equal(provider.name.toString())
+                val dataSetIdx = UsageReceiptSchemaV1.PersistentUsageReceipt::dataSetName.equal(dataSet)
+                val partyIdx = UsageReceiptSchemaV1.PersistentUsageReceipt::subscriberName.equal(ourIdentity.name.toString())
+                val dateIdx = UsageReceiptSchemaV1.PersistentUsageReceipt::date.equal(today)
+                val userIdx = UsageReceiptSchemaV1.PersistentUsageReceipt::userName.equal(userName)
+
+                val customCriteria1 = VaultCustomQueryCriteria(provIdx)
+                val customCriteria2 = VaultCustomQueryCriteria(dataSetIdx)
+                val customCriteria3 = VaultCustomQueryCriteria(partyIdx)
+                val customCriteria4 = VaultCustomQueryCriteria(dateIdx)
+                val customCriteria5 = VaultCustomQueryCriteria(userIdx)
+
+                val criteria = QueryCriteria.VaultQueryCriteria()
+                        .and(customCriteria1
+                                .and(customCriteria2
+                                        .and(customCriteria3
+                                                .and(customCriteria4
+                                                        .and(customCriteria5)))))
+
+                serviceHub.vaultService.queryBy(UsageReceiptState::class.java, criteria)
+            }.states.map { it.state.data }
+
+            val usage = usages.single()
+
+            LinearPointer(usage.linearId, UsageReceiptState::class.java)
         } else {
             null
         }
@@ -80,7 +115,8 @@ class UsageIssue(val dataSet: String, val provider: Party, val redistributor: Pa
                 provider,
                 redistributor,
                 ourIdentity,
-                userName)
+                userName,
+                today)
 
         txb.withItems(
                 StateAndContract(state, UsageContract.ID ),
