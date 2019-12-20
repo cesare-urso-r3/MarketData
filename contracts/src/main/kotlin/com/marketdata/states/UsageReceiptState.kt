@@ -40,15 +40,4 @@ class UsageReceiptState(val dataSet : LinearPointer<DataSetState>,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(UsageReceiptSchemaV1)
-
-    override fun toString(): String {
-        return stateToString(
-                mapOf(
-                        "Subscriber" to subscriber.name.toString(),
-                        "DataSet" to dataSetName,
-                        "Provider" to provider.name.toString(),
-                        "Redistributor" to redistributor.toString()
-                )
-        )
-    }
 }

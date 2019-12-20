@@ -1,0 +1,17 @@
+@startuml
+
+group requestFlow
+Alice -> Bob: Request Dataset
+note left
+No states sent, use the flow framework
+to send the search criteria
+end note
+group response subFlow
+Bob --> Alice: Send Dataset
+note right
+Distribution State plus references to
+states that are being distributed
+end note
+end
+end
+@enduml

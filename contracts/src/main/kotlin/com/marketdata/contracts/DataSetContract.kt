@@ -37,9 +37,6 @@ class DataSetContract : Contract {
                 "The terms and conditions must be issued by the provider" using (
                         outputState.termsAndConditions.resolveToState(tx).issuer == outputState.provider
                         )
-
-                // TODO: validate the data set is correctly named
-
             }
             is Commands.Revoke -> {
 

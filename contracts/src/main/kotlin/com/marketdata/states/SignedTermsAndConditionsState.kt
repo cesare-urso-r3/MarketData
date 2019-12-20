@@ -29,14 +29,4 @@ class SignedTermsAndConditionsState(val name : String,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(SignedTermsAndConditionsSchemaV1)
-
-    override fun toString() : String {
-        return stateToString(
-                mapOf(
-                        "T&C name" to name,
-                        "Issuer" to issuer.name.toString(),
-                        "Signer" to signer.name.toString()
-                )
-        )
-    }
 }

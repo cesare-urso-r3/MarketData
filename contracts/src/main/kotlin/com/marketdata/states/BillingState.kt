@@ -17,16 +17,4 @@ data class BillingState(val startDate : String,
 
     override val participants: List<Party>
         get() = listOf(from, to)
-
-    override fun toString(): String {
-        return  "+---------------+\n" +
-                "| Billing State |\n" +
-                "+---------------+\n" +
-                "From : $from\n" +
-                "To   : $to\n" +
-                "Start: $startDate\n" +
-                "End  : $endDate\n" +
-                "=================\n" +
-                "Total: $amount\n\n"
-    }
 }

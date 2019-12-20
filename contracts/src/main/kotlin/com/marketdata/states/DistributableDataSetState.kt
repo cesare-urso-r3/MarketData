@@ -35,15 +35,4 @@ class DistributableDataSetState(val dataSetName : String,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(DistributableDataSetSchemaV1)
-
-    override fun toString() : String {
-        return stateToString(
-                    mapOf(
-                            "DataSet" to dataSetName,
-                            "Provider" to provider.name.toString(),
-                            "Redistributor" to redistributor.name.toString(),
-                            "Pricing" to pricingParameters.map { it.monthlyCostPerUser }.toString()
-                    )
-        )
-    }
 }

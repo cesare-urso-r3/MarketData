@@ -32,9 +32,6 @@ class BillingContract : Contract {
 
                 "The from party must sign" using (
                         cmd.signers.toSet() == setOf(outputState.from.owningKey))
-
-                // TODO: validate the data set is correctly named
-
             }
             else -> {
                 throw IllegalArgumentException("Unknown command: ${this.toString()}")

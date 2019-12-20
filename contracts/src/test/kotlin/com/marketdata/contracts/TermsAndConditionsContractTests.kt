@@ -36,6 +36,7 @@ class TermsAndConditionsContractTests {
         ledgerServices.ledger {
             val attachmentId = attachment(attachmentFile.inputStream())
             val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            println(tandc)
             transaction {
                 output(TermsAndConditionsContract.ID, tandc)
                 command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.

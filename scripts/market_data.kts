@@ -18,8 +18,9 @@ import com.marketdata.states.*
 import com.marketdata.flows.*
 import com.marketdata.schema.*
 import com.marketdata.data.*
+import java.time.LocalDate
 
-// Kotlin shell helper script
+// Kotlin shell helper script. Sets up some helpers and also has some functions that run through demo scenarios
 
 
 /*
@@ -40,9 +41,9 @@ fun listFiles() {
 }
 
 // helper class to make it easy to work with parties
-class rpcParty (val port : Int) {
-    var proxy : CordaRPCOps
-    var party : PartyAndCertificate
+class rpcParty (val name : String, val port : Int) {
+    lateinit var proxy : CordaRPCOps
+    lateinit var party : PartyAndCertificate
 
     init {
         proxy = connect(port)!!
@@ -53,35 +54,35 @@ class rpcParty (val port : Int) {
      * Display helpers
      */
     fun displayTandCs() {
-        proxy.displayStates(com.marketdata.states.TermsAndConditionsState::class.java)
+        displayStates(com.marketdata.states.TermsAndConditionsState::class.java)
     }
 
     fun displayDataSets() {
-        proxy.displayStates(com.marketdata.states.DataSetState::class.java)
+        displayStates(com.marketdata.states.DataSetState::class.java)
     }
 
     fun displayDistributableDataSets() {
-        proxy.displayStates(com.marketdata.states.DistributableDataSetState::class.java)
+        displayStates(com.marketdata.states.DistributableDataSetState::class.java)
     }
 
     fun displaySignedTandCs() {
-        proxy.displayStates(com.marketdata.states.SignedTermsAndConditionsState::class.java)
+        displayStates(com.marketdata.states.SignedTermsAndConditionsState::class.java)
     }
 
     fun displayPermissionRequests() {
-        proxy.displayStates(com.marketdata.states.PermissionRequestState::class.java)
+        displayStates(com.marketdata.states.PermissionRequestState::class.java)
     }
 
     fun displayUsages() {
-        proxy.displayStates(com.marketdata.states.UsageState::class.java)
+        displayStates(com.marketdata.states.UsageState::class.java)
     }
 
     fun displayUsageReceipts() {
-        proxy.displayStates(com.marketdata.states.UsageReceiptState::class.java)
+        displayStates(com.marketdata.states.UsageReceiptState::class.java)
     }
 
     fun displayBill() {
-        proxy.displayStates(com.marketdata.states.BillingState::class.java)
+        displayStates(com.marketdata.states.BillingState::class.java)
     }
 
     /*
@@ -136,7 +137,7 @@ class rpcParty (val port : Int) {
                 com.marketdata.flows.IssueTandC::class.java,
                 attach(filename),
                 filename
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun createDataSet(dataSetName : String, tandCName : String, pricePerUser : Double) {
@@ -147,7 +148,7 @@ class rpcParty (val port : Int) {
                 dataSetName,
                 tandcState,
                 PricingParameter(pricePerUser)
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun downloadDataSet(dataSetName : String, p : rpcParty) {
@@ -155,7 +156,7 @@ class rpcParty (val port : Int) {
                 com.marketdata.flows.DataSetRequestInitiator::class.java,
                 p.party.party,
                 dataSetName
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun downloadDistributableDataSet(dataSetName : String, p : rpcParty, rer : rpcParty) {
@@ -164,7 +165,7 @@ class rpcParty (val port : Int) {
                 rer.party.party,
                 dataSetName,
                 p.party.party
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun createDistributableDataSet(dataSetName : String, p: rpcParty, tandCName : String, pricePerUser : Double) {
@@ -178,7 +179,7 @@ class rpcParty (val port : Int) {
                 dataSetState,
                 tandcState,
                 PricingParameter(pricePerUser)
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun signTandC(tandcName: String, issuer: rpcParty) {
@@ -187,7 +188,7 @@ class rpcParty (val port : Int) {
                 com.marketdata.flows.SignTandC::class.java,
                 tandcName,
                 issuer.party.party
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun requestPermission(p : rpcParty, rer : rpcParty, dataSetName : String) {
@@ -196,7 +197,7 @@ class rpcParty (val port : Int) {
                 p.party.party,
                 rer.party.party,
                 dataSetName
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun createUsage(p : rpcParty, rer : rpcParty, dataSetName : String, userName : String) {
@@ -207,7 +208,7 @@ class rpcParty (val port : Int) {
                 rer.party.party,
                 userName,
                 null
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun createUsage(p : rpcParty, rer : rpcParty, dataSetName : String, userName : String, rpcParty: rpcParty) {
@@ -218,7 +219,7 @@ class rpcParty (val port : Int) {
                 rer.party.party,
                 userName,
                 rpcParty.party.party
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     fun createBill(partyToBill : rpcParty, fromDate : String, toDate : String) {
@@ -227,7 +228,7 @@ class rpcParty (val port : Int) {
                 fromDate,
                 toDate,
                 partyToBill.party.party
-        ).returnValue.getOrThrow()
+        ).returnValue.get()
     }
 
     /*
@@ -238,49 +239,166 @@ class rpcParty (val port : Int) {
         return proxy.uploadAttachment(stream)
     }
 
+    /*
+     *
+     */
+    private fun <T : ContractState> displayStates(clazz : Class<T>) {
+        val criteria: QueryCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.ALL)
+        val result = proxy.vaultQueryByCriteria<ContractState>(criteria, clazz)
+        println("\n>>>> ${name} <<<<")
+        result.states.forEach{
+            println(it.state.data.toTable())
+        }
+    }
+
 }
-val p = rpcParty(10006)
-val r = rpcParty(10009)
-val s = rpcParty(10012)
-val r2 = rpcParty(10015)
+val provider = rpcParty("Provider",10006)
+val redistributor = rpcParty("Redistributor",10009)
+val subscriber = rpcParty("Subscriber",10012)
+val redistributor2 = rpcParty("Redistributor2",10015)
+
+fun logThenDo(description: String, commandText : String, block : () -> Unit) {
+    readLine()
+    println()
+    println(description)
+//    readLine()
+    println("> "+commandText)
+
+    try {
+        block()
+    } catch (e : net.corda.core.CordaRuntimeException) {
+        println(e.toString())
+    }
+}
 
 // main
-fun main () {
+fun demo1() {
 
-    p.createTandC("provider2.zip")
-    p.createDataSet("LSE", "p2.zip", 10.0)
+    logThenDo("Provider create T&C", "provider.createTandC(\"provider.zip\")") {
+        provider.createTandC("provider.zip")
+        provider.displayTandCs()
+    }
 
-    r.downloadDataSet("LSE", p)
-    r.createTandC("RedistributorDemoT&C.zip")
-    r.createDistributableDataSet("LSE", p, "RedistributorDemoT&C.zip", 1.0)
+    logThenDo("Provider create Data Set", "provider.createDataSet(\"LSE\", \"provider.zip\", 10.0)") {
+        provider.createDataSet("LSE", "provider.zip", 10.0)
+        provider.displayDataSets()
+    }
 
-    s.downloadDistributableDataSet("LSE", p, r)
-    s.signTandC("provider2.zip", p)
-    s.signTandC("RedistributorDemoT&C.zip", r)
-    s.requestPermission(p, r, "LSE")
-    s.createUsage(p, r, "LSE", "Adam.Houston")
-    s.createUsage(p, r, "LSE", "Honest.Joe")
-    s.createUsage(p, r, "LSE", "Dodgy.Dave")
+    logThenDo("Redistributor download Data Set", "redistributor.downloadDataSet(\"LSE\", provider)") {
+        redistributor.downloadDataSet("LSE", provider)
+        Thread.sleep(5000)
+        redistributor.displayDataSets()
+    }
 
+    logThenDo("Redistibutor create T&C","redistributor.createTandC(\"redistributor.zip\")") {
+        redistributor.createTandC("redistributor.zip")
+        redistributor.displayTandCs()
+    }
 
-    r.createBill(s, "2019-12-01", "2019-12-31")
+    logThenDo("Redistibutor create distributable data set", "redistributor.createDistributableDataSet(\"LSE\", provider, \"redistributor.zip\", 1.0)") {
+        redistributor.createDistributableDataSet("LSE", provider, "redistributor.zip", 1.0)
+        redistributor.displayDistributableDataSets()
+    }
 
-    r2.downloadDataSet("LSE", p)
-    r2.createTandC("r2.zip")
-    r2.createDistributableDataSet("LSE", p, "r2.zip", 2.1)
+    logThenDo("Subscriber download distributable data set", "subscriber.downloadDistributableDataSet(\"LSE\", provider, redistributor)") {
+        subscriber.downloadDistributableDataSet("LSE", provider, redistributor)
+        Thread.sleep(7000)
+        subscriber.displayDistributableDataSets()
+        subscriber.displayDataSets()
+        subscriber.displayTandCs()
+    }
 
-    s.downloadDistributableDataSet("LSE", p, r2)
-    s.signTandC("r2.zip", r2)
-    s.requestPermission(p, r2, "LSE")
-    s.createUsage(p, r2, "LSE", "Alice.McBob")
-    s.createUsage(p, r2, "LSE", "Honest.Joe", r)
+    logThenDo("Subscriber sign T&Cs", "subscriber.signTandC(\"provider.zip\", p)\n> subscriber.signTandC(\"redistributor.zip\", redistributor)") {
+        subscriber.signTandC("provider.zip", provider)
+        subscriber.signTandC("redistributor.zip", redistributor)
+        subscriber.displaySignedTandCs()
+    }
 
-    r2.createBill(s, "2019-12-01", "2019-12-31")
+    logThenDo("Subscriber request permission", "subscriber.requestPermission(provider, redistributor, \"LSE\")") {
+        subscriber.requestPermission(provider, redistributor, "LSE")
+        Thread.sleep(5000)
+        subscriber.displayPermissionRequests()
+        redistributor.displayPermissionRequests()
+        provider.displayPermissionRequests()
+    }
+
+    logThenDo("Subscriber create usages", "subscriber.createUsage(provider, redistributor, \"LSE\", \"Alice\")\n" +
+            "> subscriber.createUsage(provider, redistributor, \"LSE\", \"Bob\")\n" +
+            "> subscriber.createUsage(provider, redistributor, \"LSE\", \"Charlie\")") {
+
+        subscriber.createUsage(provider, redistributor, "LSE", "Alice")
+        subscriber.createUsage(provider, redistributor, "LSE", "Bob")
+        subscriber.createUsage(provider, redistributor, "LSE", "Charlie")
+        Thread.sleep(3000)
+        subscriber.displayUsages()
+        redistributor.displayUsages()
+        provider.displayUsages()
+    }
+
+    logThenDo("Redistributor create bill", "redistributor.createBill(subscriber, ${LocalDate.now().minusWeeks(1).toString()}, ${LocalDate.now().plusWeeks(1).toString()})") {
+        redistributor.createBill(subscriber, LocalDate.now().minusWeeks(1).toString(), LocalDate.now().plusWeeks(1).toString())
+        Thread.sleep(5000)
+        subscriber.displayBill()
+    }
 }
 
 
-// val r2 = rpcParty(10015)
+fun demo2() {
 
+    logThenDo("Subscriber display usage receipts", "subscriber.displayUsageReceipts()") {
+        subscriber.displayUsageReceipts()
+    }
+
+    logThenDo("Redistributor2 download data set", "redistributor2.downloadDataSet(\"LSE\", provider)") {
+        redistributor2.downloadDataSet("LSE", provider)
+        Thread.sleep(5000)
+        redistributor2.displayDataSets()
+    }
+
+    logThenDo("Redistributor2 create T&C","redistributor2.createTandC(\"redistributor2.zip\")"){
+        redistributor2.createTandC("redistributor2.zip")
+        redistributor2.displayTandCs()
+    }
+
+    logThenDo("Redistributor2 create distributable data set ","redistributor2.createDistributableDataSet(\"LSE\", provider, \"redistributor2.zip\", 2.1)"){
+        redistributor2.createDistributableDataSet("LSE", provider, "redistributor2.zip", 2.1)
+        redistributor2.displayDistributableDataSets()
+    }
+
+    logThenDo("Subscriber download distributable data set ","subscriber.downloadDistributableDataSet(\"LSE\", provider, redistributor2)"){
+        subscriber.downloadDistributableDataSet("LSE", provider, redistributor2)
+        Thread.sleep(5000)
+        subscriber.displayDistributableDataSets()
+    }
+
+    logThenDo("Subscriber sign T&C","subscriber.signTandC(\"redistributor2.zip\", redistributor2)"){
+        subscriber.signTandC("redistributor2.zip", redistributor2)
+        subscriber.displaySignedTandCs()
+    }
+
+    logThenDo("Subscriber request permission","subscriber.requestPermission(provider, redistributor2, \"LSE\")"){
+        subscriber.requestPermission(provider, redistributor2, "LSE")
+        subscriber.displayPermissionRequests()
+    }
+
+    logThenDo("Subscriber create usage ","subscriber.createUsage(provider, redistributor2, \"LSE\", \"Dan\")"){
+        subscriber.createUsage(provider, redistributor2, "LSE", "Dan")
+    }
+
+    logThenDo("Subscriber create usage with receipt ","subscriber.createUsage(provider, redistributor2, \"LSE\", \"Alice\", redistributor)"){
+        subscriber.createUsage(provider, redistributor2, "LSE", "Alice", redistributor)
+        Thread.sleep(3000)
+        subscriber.displayUsages()
+    }
+
+    logThenDo("Redistributor2 create bill", "redistributor2.createBill(subscriber, ${LocalDate.now().minusWeeks(1).toString()}, ${LocalDate.now().plusWeeks(1).toString()})") {
+        redistributor2.createBill(subscriber, LocalDate.now().minusWeeks(1).toString(), LocalDate.now().plusWeeks(1).toString())
+        Thread.sleep(3000)
+
+        subscriber.displayUsages()
+        subscriber.displayBill()
+    }
+}
 
 
 

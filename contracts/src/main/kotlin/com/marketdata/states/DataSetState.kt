@@ -29,16 +29,4 @@ class DataSetState(val name : String,
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(DataSetSchemaV1)
-
-    override fun toString() : String {
-
-        return stateToString(
-                mapOf(
-                        "Name" to name,
-                        "Provider" to provider.name.toString(),
-                        "Pricing" to pricingParameters.map { it.monthlyCostPerUser }.toString(),
-                        "linearId" to linearId.toString()
-                )
-        )
-    }
 }

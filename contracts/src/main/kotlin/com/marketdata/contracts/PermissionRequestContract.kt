@@ -66,6 +66,7 @@ class PermissionRequestContract : Contract {
 
                 "The dataSet requested does not match the provided dataSet details" using
                         ( dataSet.name == outputState.dataSetName )
+
             }
             else -> {
                 throw IllegalArgumentException("Unknown command: ${this.toString()}")

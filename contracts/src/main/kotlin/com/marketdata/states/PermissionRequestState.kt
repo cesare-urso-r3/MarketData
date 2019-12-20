@@ -38,15 +38,4 @@ data class PermissionRequestState(val distributableDataSet: LinearPointer<Distri
     }
 
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(PermissionSchemaV1)
-
-    override fun toString() : String {
-        return stateToString(
-                mapOf(
-                        "Subscriber" to subscriber.name.toString(),
-                        "DataSet" to dataSetName,
-                        "Provider" to provider.name.toString(),
-                        "Redistributor" to redistributor.name.toString()
-                )
-        )
-    }
 }
