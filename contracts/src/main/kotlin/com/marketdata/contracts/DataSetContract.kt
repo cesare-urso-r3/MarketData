@@ -29,8 +29,8 @@ class DataSetContract : Contract {
 
                 val outputState = tx.outputStates.single() as DataSetState
 
-                "Only the issuer must sign" using (
-                        cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
+                "Only the provider must sign" using (
+                        cmd.signers.toSet() == setOf(outputState.provider.owningKey))
 
                 "The dataSet name cannot be empty" using ( outputState.name.isNotEmpty() )
 

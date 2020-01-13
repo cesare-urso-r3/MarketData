@@ -30,8 +30,8 @@ class DistributableDataSetContract : Contract {
 
                 val outputState = tx.outputStates.single() as DistributableDataSetState
 
-                "The issuer must sign" using (
-                        cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
+                "The redistributor must sign" using (
+                        cmd.signers.toSet() == setOf(outputState.redistributor.owningKey))
 
                 "The dataSet name cannot be empty" using ( outputState.dataSetName.isNotEmpty() )
 

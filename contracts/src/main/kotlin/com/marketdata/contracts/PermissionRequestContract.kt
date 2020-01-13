@@ -25,9 +25,9 @@ class PermissionRequestContract : Contract {
 
         when (cmd.value) {
             is Commands.Issue -> {
-                "No inputs should be consumed when issuing data set." using (tx.inputStates.isEmpty())
+                "No inputs should be consumed when issuing permission." using (tx.inputStates.isEmpty())
 
-                "Only one output state should be created when issuing data set." using (tx.outputStates.size == 1)
+                "Only one output state should be created when issuing permission." using (tx.outputStates.size == 1)
 
                 val outputState = tx.outputStates.single() as PermissionRequestState
 

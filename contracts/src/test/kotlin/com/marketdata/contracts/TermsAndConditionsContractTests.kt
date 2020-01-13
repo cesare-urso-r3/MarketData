@@ -7,6 +7,7 @@ import com.marketdata.states.TermsAndConditionsState
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.node.NotaryInfo
+import net.corda.finance.contracts.asset.Obligation
 import net.corda.testing.common.internal.testNetworkParameters
 import net.corda.testing.core.DUMMY_NOTARY_NAME
 import net.corda.testing.core.TestIdentity
@@ -27,8 +28,7 @@ class TermsAndConditionsContractTests {
 
     class DummyCommand : TypeOnlyCommandData()
     val attachmentFile = File("src/test/resources/DemoT&C.zip")
-
-
+    val attachmentFile2 = File("src/test/resources/prices.zip")
 
     @Test
     fun termAndConditionIssue() {
@@ -47,164 +47,119 @@ class TermsAndConditionsContractTests {
     }
 
     @Test
-    fun signedTermAndConditionIssue() {
+    fun termAndConditionWrongCommand() {
 
         ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            println(tandc)
             transaction {
-                val attachmentId = attachment(attachmentFile.inputStream())
-                val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
-                val pointer = LinearPointer(tandc.linearId, TermsAndConditionsState::class.java)
-                output(SignedTermsAndConditionsContract.ID, SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, pointer))
-                reference(TermsAndConditionsContract.ID, tandc)
-                command(listOf(ALICE.publicKey), SignedTermsAndConditionsContract.Commands.Issue()) // Correct type.
-                this.verifies()
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), DummyCommand()) // Correct type.
+                attachment(attachmentId)
+                this.fails()
             }
         }
     }
 
-//    fun permissionState() {
-//
-//        ledgerServices.ledger {
-//            transaction {
-//                val dsState = DataSetState("data_set", BOB.party).linearId
-//                output(PermissionContract.ID, PermissionState("data_set", dsState, BOB.party, ALICE.party, CHARLIE.party))
-//                command(listOf(BOB.publicKey), DataSetContract.Commands.Issue()) // Correct type.
-//                reference(DataSetContract.ID, dsState)
-//                this.verifies()
-//            }
-//        }
-//    }
+    @Test
+    fun termAndConditionWithInputs() {
 
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            val tandc2 = TermsAndConditionsState("StandardTerms2", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                input(TermsAndConditionsContract.ID, tandc2)
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                attachment(attachmentId)
+                this.`fails with`("No inputs should be consumed when issuing data set.")
+            }
+        }
+    }
 
-//    @Test
-//    fun mustIncludeIssueCommand() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                output(PermissionContract.ID, perm)
-//                command(listOf(ALICE.publicKey, BOB.publicKey), DummyCommand()) // Wrong type.
-//// attachment(attachment(attachmentFile.inputStream()))
-//                this.fails()
-//            }
-//            transaction {
-//                output(PermissionContract.ID, perm)
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue()) // Correct type.
-//// attachment(attachment(attachmentFile.inputStream()))
-//                this.verifies()
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun noInputsAllowed() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                input(PermissionContract.ID, perm)
-//                output(PermissionContract.ID, perm)
-//                this `fails with` "No inputs should be consumed when issuing Permission."
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun singleOutputAllowed() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                output(PermissionContract.ID, perm)
-//                this `fails with` "Only one output state should be created when issuing Permission."
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun allPartiesMustSign1() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this `fails with` "All parties involved must sign permission issue transaction."
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun allPartiesMustSign2() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this `fails with` "All parties involved must sign permission issue transaction."
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun allPartiesMustSign3() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party, CHARLIE.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this `fails with` "All parties involved must sign permission issue transaction."
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun allPartiesMustSign4() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party, ALICE.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this.verifies()
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun allPartiesMustSign5() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party, BOB.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this.verifies()
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun subscriberAndProviderCannotBeTheSame() {
-//        val perm = PermissionState("data_set", ALICE.party, BOB.party)
-//        val subIsProv = PermissionState("data_set", ALICE.party, ALICE.party)
-//        ledgerServices.ledger {
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey),PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, subIsProv)
-//                this `fails with` "The subscriber and provider cannot be the same."
-//            }
-//            transaction {
-//                command(listOf(ALICE.publicKey, BOB.publicKey), PermissionContract.Commands.Issue())
-//// attachment(attachment(attachmentFile.inputStream()))
-//                output(PermissionContract.ID, perm)
-//                this.verifies()
-//            }
-//        }
-//    }
+    @Test
+    fun termAndConditionTooManyOutputs() {
+
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            val tandc2 = TermsAndConditionsState("StandardTerms2", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                output(TermsAndConditionsContract.ID, tandc2)
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                attachment(attachmentId)
+                this.`fails with`("Only one output state should be created when issuing terms and conditions.")
+            }
+        }
+    }
+
+    @Test
+    fun termAndConditionWrongSigner() {
+
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(ALICE.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                attachment(attachmentId)
+                this.`fails with`("The issuer must be the one and only signer")
+            }
+        }
+    }
+
+    @Test
+    fun termAndConditionEmptyDataSet() {
+
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                attachment(attachmentId)
+                this.`fails with`("The dataSet name cannot be empty")
+            }
+        }
+    }
+
+    @Test
+    fun termAndConditionNoAttachment() {
+
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                this.`fails with`("Terms and Conditions must be present")
+            }
+        }
+    }
+
+    @Test
+    fun termAndConditionTooManyAttachments() {
+
+        ledgerServices.ledger {
+            val attachmentId = attachment(attachmentFile.inputStream())
+            val attachmentId2 = attachment(attachmentFile2.inputStream())
+            val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+            println(tandc)
+            transaction {
+                output(TermsAndConditionsContract.ID, tandc)
+                command(listOf(BOB.publicKey), TermsAndConditionsContract.Commands.Issue(attachmentId)) // Correct type.
+                attachment(attachmentId)
+                attachment(attachmentId2)
+                this.`fails with`("Only one attachment is permitted")
+            }
+        }
+    }
 }

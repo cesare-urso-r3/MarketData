@@ -31,11 +31,11 @@ class TermsAndConditionsContract : Contract {
             is Commands.Issue -> {
                 "No inputs should be consumed when issuing data set." using (tx.inputStates.isEmpty())
 
-                "Only one output state should be created when issuing data set." using (tx.outputStates.size == 1)
+                "Only one output state should be created when issuing terms and conditions." using (tx.outputStates.size == 1)
 
                 val outputState = tx.outputStates.single() as TermsAndConditionsState
 
-                "The issuer must sign" using (
+                "The issuer must be the one and only signer" using (
                         cmd.signers.toSet() == outputState.participants.map { it.owningKey }.toSet())
 
                 "The dataSet name cannot be empty" using ( outputState.name.isNotEmpty() )
@@ -45,6 +45,9 @@ class TermsAndConditionsContract : Contract {
                 } catch (e: NoSuchElementException) {
                     throw IllegalArgumentException("Terms and Conditions must be present")
                 }
+
+                // 2 attachments - the contract jar and the terms and conditions
+                "Only one attachment is permitted" using (tx.attachments.size == 2)
             }
             is Commands.Revoke -> {
 

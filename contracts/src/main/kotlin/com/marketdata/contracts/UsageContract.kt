@@ -26,9 +26,9 @@ class UsageContract : Contract {
 
         when (cmd.value) {
             is Commands.Issue -> {
-                "No inputs should be consumed when issuing Permission." using (tx.inputStates.isEmpty())
+                "No inputs should be consumed when issuing Usage." using (tx.inputStates.isEmpty())
 
-                "Only one output state should be created when issuing Permission." using (tx.outputStates.size == 1)
+                "Only one output state should be created when issuing Usage." using (tx.outputStates.size == 1)
 
                 val outputState = tx.outputStates.single() as UsageState
 
@@ -69,9 +69,9 @@ class UsageContract : Contract {
                 }
             }
             is Commands.SendReceipt -> {
-                "No inputs should be consumed when issuing Permission." using (tx.inputStates.isEmpty())
+                "No inputs should be consumed when issuing receipt." using (tx.inputStates.isEmpty())
 
-                "Only one output state should be created when issuing Permission." using (tx.outputStates.size == 1)
+                "Only one output state should be created when issuing receipt." using (tx.outputStates.size == 1)
 
                 val outputState = tx.outputStates.single() as UsageReceiptState
 
@@ -82,6 +82,13 @@ class UsageContract : Contract {
                 "The data set name must match that of the provided data set state" using (dataSet.name == outputState.dataSetName)
                 "The provider must match that of the provided data set state" using (dataSet.provider == outputState.provider)
                 "Incorrect signed T&Cs" using (dataTandCs == signedTandCs.termsAndConditions.resolveToState(tx))
+
+                "All parties are required to sign" using (
+                            cmd.signers.toSet() ==
+                                listOf(outputState.provider, outputState.subscriber, outputState.redistributor)
+                                        .map { it.owningKey }
+                                        .toSet()
+                        )
             }
             else -> {
                 throw IllegalArgumentException("Unknown command: ${this.toString()}")

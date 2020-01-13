@@ -1,25 +1,35 @@
 package com.marketdata.contracts
 
-import com.marketdata.ALICE
-import com.marketdata.BOB
-import com.marketdata.CHARLIE
-import com.marketdata.MEGACORP
-import com.marketdata.MINICORP
+import com.marketdata.*
 import com.marketdata.data.PricingParameter
 import com.marketdata.states.*
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.node.NotaryInfo
-import net.corda.core.transactions.TransactionBuilder
 import net.corda.testing.common.internal.testNetworkParameters
 import net.corda.testing.core.DUMMY_NOTARY_NAME
 import net.corda.testing.core.TestIdentity
+import net.corda.testing.dsl.EnforceVerifyOrFail
+import net.corda.testing.dsl.TransactionDSL
+import net.corda.testing.dsl.TransactionDSLInterpreter
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 import java.io.File
-import java.security.Permission
 import java.time.LocalDate
+
+data class BaseTestParams(
+        val dataSetName : String = "LSE L1",
+        val redistributor: TestIdentity = CHARLIE,
+        val provider : TestIdentity = BOB,
+        val addSigner : Boolean = false,
+        val wrongSigner : Boolean = false,
+        val subscriber : TestIdentity = ALICE,
+        val extraOutput : Boolean = false,
+        val extraInput : Boolean = false,
+        val date : String = LocalDate.now().toString(),
+        val user : String = "Adam"
+)
 
 class UsageContractTests {
 
@@ -36,11 +46,10 @@ class UsageContractTests {
     val attachmentFile = File("src/test/resources/DemoT&C.zip")
     val distAttachmentFile = File("src/test/resources/DistributableT&C.zip")
 
-    @Test
-    fun usageRequest() {
+    fun baseTest(params : BaseTestParams = BaseTestParams(),
+                 verificationBlock : TransactionDSL<TransactionDSLInterpreter>.() -> EnforceVerifyOrFail) {
 
         ledgerServices.ledger {
-        //    transaction (transactionBuilder = TransactionBuilder(serviceHub = ledgerServices)) {
             transaction {
                 val attachmentId = attachment(attachmentFile.inputStream())
                 val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
@@ -98,23 +107,204 @@ class UsageContractTests {
                 reference(PermissionRequestContract.ID, permission)
 
                 val usage = UsageState(
-                        "LSE L1",
+                        params.dataSetName,
                         permissionPointer,
                         null,
-                        BOB.party,
-                        CHARLIE.party,
-                        ALICE.party,
-                        "Adam",
-                        LocalDate.now().toString())
+                        params.provider.party,
+                        params.redistributor.party,
+                        params.subscriber.party,
+                        params.user,
+                        params.date)
 
                 output(UsageContract.ID, usage)
 
-                command(listOf(ALICE.publicKey),
+                if (params.extraInput) {
+                    input(UsageContract.ID, usage)
+                }
+                if(params.extraOutput) {
+                    output(UsageContract.ID, usage)
+                }
+
+                var signers = listOf(params.subscriber)
+                if (params.addSigner) {
+                    signers = (signers + EMPTY_IDENTITY)
+                }
+                if (params.wrongSigner) {
+                    signers = listOf(EMPTY_IDENTITY)
+                }
+
+                command(signers.map { it.publicKey },
                         UsageContract.Commands.Issue())
 
-                this.verifies()
+                verificationBlock()
 
             }
         }
     }
+
+    @Test
+    fun usageTest() {
+        baseTest {
+            verifies()
+        }
+    }
+
+    @Test
+    fun usageTooManyOutput() {
+        baseTest (BaseTestParams(extraOutput = true)) {
+            `fails with`("Only one output state should be created when issuing Usage.")
+        }
+    }
+
+    @Test
+    fun usageTooManyInput() {
+        baseTest (BaseTestParams(extraInput = true)) {
+            `fails with`("No inputs should be consumed when issuing Usage.")
+        }
+    }
+
+    @Test
+    fun usageMissingSigner() {
+        baseTest (BaseTestParams(wrongSigner = true)) {
+            `fails with`("Only the subscriber is required to sign")
+        }
+    }
+
+    @Test
+    fun usageExtraSigner() {
+        baseTest (BaseTestParams(addSigner = true)) {
+            `fails with`("Only the subscriber is required to sign")
+        }
+    }
+
+    @Test
+    fun usageWrongProvider() {
+        baseTest (BaseTestParams(provider = ALICE)) {
+            `fails with`("The subscriber and provider cannot be the same.")
+        }
+    }
+
+    @Test
+    fun usageEmptyDate() {
+        baseTest (BaseTestParams(date = "")) {
+            `fails with`("The date cannot be empty")
+        }
+    }
+
+    @Test
+    fun usageEmptyUser() {
+        baseTest (BaseTestParams(user = "")) {
+            `fails with`( "The username cannot be empty" )
+        }
+    }
+
+    @Test
+    fun usageWrongDataSet() {
+        baseTest (BaseTestParams(dataSetName = "WrongDS")) {
+            `fails with`("The data set must match the data set on the permission state")
+        }
+    }
+
+    @Test
+    fun permissionRequestWrongProvider() {
+        baseTest (BaseTestParams(provider = DAN)) {
+            `fails with`("The provider must match the provider on the permission state")
+        }
+    }
+
+    @Test
+    fun permissionRequestWrongRedistributorPerm() {
+        baseTest (BaseTestParams(redistributor = DAN)) {
+            `fails with`("The redistributor must match the provider on the permission state")
+        }
+    }
+
+    @Test
+    fun permissionRequestWrongSubscriberPerm() {
+        baseTest (BaseTestParams(subscriber = DAN)) {
+            `fails with`("The subscriber must match the subscriber on the permission state")
+        }
+    }
+
+    fun receiptBaseTest(params : BaseTestParams = BaseTestParams(),
+                 verificationBlock : TransactionDSL<TransactionDSLInterpreter>.() -> EnforceVerifyOrFail) {
+
+        ledgerServices.ledger {
+            transaction {
+                val attachmentId = attachment(attachmentFile.inputStream())
+                val tandc = TermsAndConditionsState("StandardTerms", BOB.party, attachmentId)
+                val dataTandCpointer = LinearPointer(tandc.linearId, TermsAndConditionsState::class.java)
+
+                val prices  = PricingParameter(10.0)
+                val dataSet = DataSetState("LSE L1", BOB.party, listOf(prices), dataTandCpointer)
+                val dataSetPointer = LinearPointer(dataSet.linearId, DataSetState::class.java)
+
+                val signedDataTandCs =
+                        SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, dataTandCpointer)
+                val signedDataTandCsPointer =
+                        LinearPointer(signedDataTandCs.linearId, SignedTermsAndConditionsState::class.java)
+
+
+                reference(SignedTermsAndConditionsContract.ID, signedDataTandCs)
+                reference(DataSetContract.ID, dataSet)
+                reference(TermsAndConditionsContract.ID, tandc)
+
+                val usageReceipt =  UsageReceiptState(
+                        dataSetPointer,
+                        signedDataTandCsPointer,
+                        params.dataSetName,
+                        params.provider.party,
+                        params.redistributor.party,
+                        params.subscriber.party,
+                        params.user,
+                        params.date
+                )
+
+                output(UsageContract.ID, usageReceipt)
+
+                if (params.extraInput) {
+                    input(UsageContract.ID, usageReceipt)
+                }
+                if(params.extraOutput) {
+                    output(UsageContract.ID, usageReceipt)
+                }
+
+                var signers = listOf(params.subscriber)
+                if (params.addSigner) {
+                    signers = (signers + EMPTY_IDENTITY)
+                }
+                if (params.wrongSigner) {
+                    signers = listOf(EMPTY_IDENTITY)
+                }
+
+                command(signers.map { it.publicKey },
+                        UsageContract.Commands.SendReceipt())
+
+                verificationBlock()
+
+            }
+        }
+    }
+
+    @Test
+    fun usageReceiptTest() {
+        receiptBaseTest {
+            verifies()
+        }
+    }
+
+    @Test
+    fun usageReceiptTooManyOutput() {
+        receiptBaseTest (BaseTestParams(extraOutput = true)) {
+            `fails with`("Only one output state should be created when issuing receipt.")
+        }
+    }
+
+    @Test
+    fun usageReceiptTooManyInput() {
+        receiptBaseTest (BaseTestParams(extraInput = true)) {
+            `fails with`("No inputs should be consumed when issuing receipt.")
+        }
+    }
+
 }
