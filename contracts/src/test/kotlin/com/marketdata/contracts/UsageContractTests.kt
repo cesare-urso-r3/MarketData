@@ -3,6 +3,7 @@ package com.marketdata.contracts
 import com.marketdata.*
 import com.marketdata.data.PricingParameter
 import com.marketdata.states.*
+import com.sun.org.apache.xpath.internal.operations.Bool
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.node.NotaryInfo
@@ -17,6 +18,7 @@ import net.corda.testing.node.ledger
 import org.junit.Test
 import java.io.File
 import java.time.LocalDate
+import java.util.spi.CalendarDataProvider
 
 data class BaseTestParams(
         val dataSetName : String = "LSE L1",
@@ -28,7 +30,19 @@ data class BaseTestParams(
         val extraOutput : Boolean = false,
         val extraInput : Boolean = false,
         val date : String = LocalDate.now().toString(),
-        val user : String = "Adam"
+        val user : String = "Tester",
+        val wrongTandCs : Boolean = false,
+        val paidUsage : Boolean = false,
+        val paidBadDataSet : Boolean = false,
+        val paidDataSetName : String = "LSE L1",
+        val paidUser : String = "Tester",
+        val paidDate : String = LocalDate.now().toString(),
+        val paidSubscriber : TestIdentity = ALICE,
+        val paidProvider : TestIdentity = BOB,
+        val paidBadSignedTandC : Boolean = false,
+        val paidBadSignedTandCName : String = "StandardTerms",
+        val paidBadSignedTandCIssuer : TestIdentity = BOB,
+        val paidBadSignedTandCSigner : TestIdentity = ALICE
 )
 
 class UsageContractTests {
@@ -45,6 +59,7 @@ class UsageContractTests {
     class DummyCommand : TypeOnlyCommandData()
     val attachmentFile = File("src/test/resources/DemoT&C.zip")
     val distAttachmentFile = File("src/test/resources/DistributableT&C.zip")
+    val badAttachmentFile = File("src/test/resources/prices.zip")
 
     fun baseTest(params : BaseTestParams = BaseTestParams(),
                  verificationBlock : TransactionDSL<TransactionDSLInterpreter>.() -> EnforceVerifyOrFail) {
@@ -106,10 +121,60 @@ class UsageContractTests {
 
                 reference(PermissionRequestContract.ID, permission)
 
+                val paidUsage = if (params.paidUsage) {
+
+                    var dataSetPointerToUse =  dataSetPointer
+                    var tandCPointerToUse =  dataTandCpointer
+                    var signedTandCPointerToUse = signedDataTandCsPointer
+
+                    if (params.paidBadDataSet) {
+                        val badAttachmentId = attachment(badAttachmentFile.inputStream())
+                        val badTandc = TermsAndConditionsState("BadTerms", DAN.party, badAttachmentId)
+                        val badDataTandCpointer = LinearPointer(badTandc.linearId, TermsAndConditionsState::class.java)
+
+                        val badPrices = PricingParameter(110.0)
+                        val badDataSet = DataSetState("BAD DATA", DAN.party, listOf(badPrices), badDataTandCpointer)
+
+                        dataSetPointerToUse = LinearPointer(badDataSet.linearId, DataSetState::class.java)
+                        println("I am Using the bad data set.")
+
+                        reference(DataSetContract.ID, badDataSet)
+                        reference(TermsAndConditionsContract.ID, badTandc)
+                    }
+
+                    if (params.paidBadSignedTandC) {
+                        val signedBadTandCs =
+                                SignedTermsAndConditionsState(params.paidBadSignedTandCName,
+                                        params.paidBadSignedTandCIssuer.party,
+                                        params.paidBadSignedTandCSigner.party,
+                                        tandCPointerToUse)
+
+                        signedTandCPointerToUse = LinearPointer(signedBadTandCs.linearId,
+                                SignedTermsAndConditionsState::class.java)
+                        reference(SignedTermsAndConditionsContract.ID, signedBadTandCs)
+                    }
+
+                    val receipt = UsageReceiptState(
+                            dataSetPointerToUse,
+                            signedTandCPointerToUse,
+                            params.paidDataSetName,
+                            params.paidProvider.party,
+                            params.redistributor.party,
+                            params.paidSubscriber.party,
+                            params.paidUser,
+                            params.paidDate
+                    )
+                    reference(UsageContract.ID, receipt)
+                    LinearPointer(receipt.linearId,
+                            UsageReceiptState::class.java)
+                } else {
+                    null
+                }
+
                 val usage = UsageState(
                         params.dataSetName,
                         permissionPointer,
-                        null,
+                        paidUsage,
                         params.provider.party,
                         params.redistributor.party,
                         params.subscriber.party,
@@ -239,19 +304,35 @@ class UsageContractTests {
                 val dataSet = DataSetState("LSE L1", BOB.party, listOf(prices), dataTandCpointer)
                 val dataSetPointer = LinearPointer(dataSet.linearId, DataSetState::class.java)
 
-                val signedDataTandCs =
+                val dsTandCs =
                         SignedTermsAndConditionsState("StandardTerms", tandc.issuer, ALICE.party, dataTandCpointer)
-                val signedDataTandCsPointer =
-                        LinearPointer(signedDataTandCs.linearId, SignedTermsAndConditionsState::class.java)
 
+                var signedTandCs = dsTandCs
 
-                reference(SignedTermsAndConditionsContract.ID, signedDataTandCs)
+                var altTandCs : TermsAndConditionsState? = null
+
+                if (params.wrongTandCs) {
+                    val distAttachmentId = attachment(distAttachmentFile.inputStream())
+                    altTandCs = TermsAndConditionsState("DistributableTerms", CHARLIE.party, distAttachmentId)
+                    val distTandCpointer = LinearPointer(altTandCs.linearId, TermsAndConditionsState::class.java)
+                    signedTandCs =
+                            SignedTermsAndConditionsState("DistributableTerms", altTandCs.issuer, ALICE.party, distTandCpointer)
+                }
+
+                if (altTandCs != null) {
+                    reference(TermsAndConditionsContract.ID, altTandCs)
+                }
+
+                reference(SignedTermsAndConditionsContract.ID, signedTandCs)
                 reference(DataSetContract.ID, dataSet)
                 reference(TermsAndConditionsContract.ID, tandc)
 
+                val signedTandCPointer =
+                        LinearPointer(signedTandCs.linearId, SignedTermsAndConditionsState::class.java)
+
                 val usageReceipt =  UsageReceiptState(
                         dataSetPointer,
-                        signedDataTandCsPointer,
+                        signedTandCPointer,
                         params.dataSetName,
                         params.provider.party,
                         params.redistributor.party,
@@ -269,7 +350,7 @@ class UsageContractTests {
                     output(UsageContract.ID, usageReceipt)
                 }
 
-                var signers = listOf(params.subscriber)
+                var signers = listOf(params.subscriber, params.provider, params.redistributor)
                 if (params.addSigner) {
                     signers = (signers + EMPTY_IDENTITY)
                 }
@@ -307,4 +388,127 @@ class UsageContractTests {
         }
     }
 
+    @Test
+    fun usageReceiptWrongDataSet() {
+        receiptBaseTest (BaseTestParams(dataSetName = "WrongDS")) {
+            `fails with`("The data set name must match that of the provided data set state")
+        }
+    }
+
+    @Test
+    fun usageReceiptWrongProvider() {
+        receiptBaseTest (BaseTestParams(provider = DAN)) {
+            `fails with`("The provider must match that of the provided data set state")
+        }
+    }
+
+    @Test
+    fun usageReceiptWrongTandCs() {
+        receiptBaseTest (BaseTestParams(wrongTandCs = true)) {
+            `fails with`("Incorrect signed T&Cs")
+        }
+    }
+
+    @Test
+    fun usageReceiptExtraSigner() {
+        receiptBaseTest (BaseTestParams(addSigner = true)) {
+            `fails with`("All parties are required to sign")
+        }
+    }
+
+    @Test
+    fun usageReceiptMissingSigner() {
+        receiptBaseTest (BaseTestParams(wrongSigner = true)) {
+            `fails with`("All parties are required to sign")
+        }
+    }
+
+    // Paid usage tests
+
+    @Test
+    fun paidUsageTest() {
+        baseTest (BaseTestParams(paidUsage = true)){
+            verifies()
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongSubscriber() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidSubscriber = DAN
+                )) {
+            `fails with`("Paid permission must be for the correct subscriber")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongProvider() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidProvider = DAN
+                )) {
+            `fails with`("Paid permission must be for the correct provider")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongDate() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidDate = LocalDate.now().minusDays(7).toString()
+                )) {
+            `fails with`("Paid permission must be for the correct date")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongDataSetName() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidDataSetName = "Wrong"
+                )) {
+            `fails with`("Paid permission must be for the correct data set name")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongSignedTandCName() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidBadSignedTandC = true,
+                        paidBadSignedTandCName = "Wrong TC Name"
+                )) {
+            `fails with`("Signed Terms and conditions must be for the correct T&C name")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongSignedTandCIssuer() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidBadSignedTandC = true,
+                        paidBadSignedTandCIssuer = DAN
+                )) {
+            `fails with`("Signed Terms and conditions must be for the correct T&C issuer")
+        }
+    }
+
+    @Test
+    fun paidUsageTestWrongSignedTandCSigner() {
+        baseTest (
+                BaseTestParams(
+                        paidUsage = true,
+                        paidBadSignedTandC = true,
+                        paidBadSignedTandCSigner = DAN
+                )) {
+            `fails with`("Signed Terms and conditions must be signed by the subscriber")
+        }
+    }
 }

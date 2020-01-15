@@ -53,19 +53,36 @@ class UsageContract : Contract {
                 "The subscriber must match the subscriber on the permission state" using
                         (outputState.subscriber == permissionState.subscriber)
 
+                var paidUsageStateAndRef : StateAndRef<UsageReceiptState>? = null
                 try {
-                    val paidUsageStateAndRef = outputState.paidUsageState?.resolve(tx)
-
-                    if (paidUsageStateAndRef != null) {
-                        val paidUsageStateDataSet = paidUsageStateAndRef.state.data.dataSet.resolveToState(tx)
-
-                        val distributableDataSet = permissionState.distributableDataSet.resolveToState(tx)
-                        val dataSet = distributableDataSet.dataSet.resolveToState(tx)
-                        "Paid permission must be for the correct data set" using ( paidUsageStateDataSet == dataSet )
-                    }
-
+                    paidUsageStateAndRef = outputState.paidUsageState?.resolve(tx)
                 } catch (e: NoSuchElementException) {
                     // this is ok, it's an optional reference
+                }
+
+                // do this outside the try/catch as we do want to raise errors if anything here throws an exception
+                if (paidUsageStateAndRef != null) {
+                    val paidUsageStateDataSet = paidUsageStateAndRef.state.data.dataSet.resolveToState(tx)
+
+                    val distributableDataSet = permissionState.distributableDataSet.resolveToState(tx)
+                    val dataSet = distributableDataSet.dataSet.resolveToState(tx)
+                    "Paid permission must be for the correct data set" using (
+                            paidUsageStateDataSet.name == dataSet.name &&
+                            paidUsageStateDataSet.provider == dataSet.provider
+                            )
+
+                    val paidUsageState = paidUsageStateAndRef.state.data
+                    "Paid permission must be for the correct subscriber" using ( paidUsageState.subscriber == outputState.subscriber )
+                    "Paid permission must be for the correct provider" using ( paidUsageState.provider == outputState.provider )
+                    "Paid permission must be for the correct date" using ( paidUsageState.date == outputState.date )
+                    "Paid permission must be for the correct user" using ( paidUsageState.userName == outputState.userName )
+                    "Paid permission must be for the correct data set name" using ( paidUsageState.dataSetName == outputState.dataSetName )
+
+                    val tandC = dataSet.termsAndConditions.resolveToState(tx)
+                    val signedTandC = paidUsageState.signedTandCs.resolveToState(tx)
+                    "Signed Terms and conditions must be for the correct T&C name" using ( signedTandC.name == tandC.name )
+                    "Signed Terms and conditions must be for the correct T&C issuer"  using ( signedTandC.issuer == tandC.issuer )
+                    "Signed Terms and conditions must be signed by the subscriber"  using ( signedTandC.signer == outputState.subscriber )
                 }
             }
             is Commands.SendReceipt -> {

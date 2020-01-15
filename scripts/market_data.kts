@@ -271,7 +271,7 @@ fun logThenDo(description: String, commandText : String, block : () -> Unit) {
     }
 }
 
-// main
+// Step through the entire lifecycle of creating and sharing all states, right up to creating permission and usage
 fun demo1() {
 
     logThenDo("Provider create T&C", "provider.createTandC(\"provider.zip\")") {
@@ -342,7 +342,7 @@ fun demo1() {
     }
 }
 
-
+// Create a paid-for usage
 fun demo2() {
 
     logThenDo("Subscriber display usage receipts", "subscriber.displayUsageReceipts()") {
