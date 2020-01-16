@@ -1,8 +1,8 @@
 buildscript {
     ext {
         corda_release_group = 'net.corda'
-        corda_release_version = '4.1'
-        corda_gradle_plugins_version = '4.0.45'
+        corda_release_version = '4.3'
+        corda_gradle_plugins_version = '5.0.4'
         kotlin_version = '1.2.71'
         junit_version = '4.12'
         quasar_version = '0.7.10'
@@ -10,14 +10,14 @@ buildscript {
         spring_boot_gradle_plugin_version = '2.0.2.RELEASE'
         slf4j_version = '1.7.25'
         log4j_version = '2.11.2'
-        corda_platform_version = '4'.toInteger()
+        corda_platform_version = '5'.toInteger()
     }
 
     repositories {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url 'https://software.r3.com/artifactory/corda' }    
+        maven { url 'https://software.r3.com/artifactory/corda' }
     }
 
     dependencies {
@@ -38,6 +38,7 @@ allprojects {
         mavenCentral()
         maven { url 'https://software.r3.com/artifactory/corda' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://repo.gradle.org/gradle/libs-releases' }
     }
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
