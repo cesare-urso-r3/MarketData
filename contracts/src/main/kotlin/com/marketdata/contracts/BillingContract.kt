@@ -1,13 +1,11 @@
 package com.marketdata.contracts
 
 import com.marketdata.states.BillingState
-import com.marketdata.states.DataSetState
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.Requirements.using
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.contracts.requireSingleCommand
-import net.corda.core.node.services.AttachmentId
 import net.corda.core.transactions.LedgerTransaction
 
 class BillingContract : Contract {

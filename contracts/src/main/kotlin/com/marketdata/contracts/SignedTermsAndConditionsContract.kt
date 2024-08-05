@@ -4,11 +4,8 @@ import com.marketdata.states.*
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.Requirements.using
-import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.contracts.requireSingleCommand
-import net.corda.core.node.services.AttachmentId
 import net.corda.core.transactions.LedgerTransaction
-import java.util.jar.JarInputStream
 
 class SignedTermsAndConditionsContract : Contract {
     companion object {

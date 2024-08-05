@@ -4,7 +4,7 @@ cordapp {
     targetPlatformVersion corda_platform_version
     minimumPlatformVersion corda_platform_version
     contract {
-        name "Template CorDapp"
+        name "Template Contracts"
         vendor "Corda Open Source"
         licence "Apache License, Version 2.0"
         versionId 1
@@ -12,10 +12,23 @@ cordapp {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     // Corda dependencies.
-    cordaCompile "$corda_release_group:corda-core:$corda_release_version"
+    cordaProvided "$corda_core_release_group:corda-core:$corda_core_release_version"
+    cordaProvided "$corda_core_release_group:corda-core-test-utils:$corda_core_release_version"
+    cordaProvided "$corda_core_release_group:corda-test-utils:$corda_core_release_version"
+    testImplementation "$corda_release_group:corda-node-driver:$corda_release_version"
 
-    testCompile "$corda_release_group:corda-node-driver:$corda_release_version"
+    implementation("javax.persistence:javax.persistence-api:2.2")
+    implementation("org.hibernate:hibernate-core:5.6.14.Final")
+
+
+    //implementation(kotlin("reflect"))
+
+    testImplementation "junit:junit:$junit_version"
+}
+
+test {
+    jvmArgs = rootProject.ext.test_add_opens
 }

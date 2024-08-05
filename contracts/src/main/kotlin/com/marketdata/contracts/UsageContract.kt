@@ -1,15 +1,13 @@
 package com.marketdata.contracts
 
-import com.marketdata.states.DataSetState
-import com.marketdata.states.PermissionRequestState
+
 import com.marketdata.states.UsageReceiptState
 import com.marketdata.states.UsageState
 import net.corda.core.contracts.*
 import net.corda.core.contracts.Requirements.using
-import net.corda.core.crypto.internal.providerMap
-import net.corda.core.identity.Party
+
 import net.corda.core.transactions.LedgerTransaction
-import java.time.LocalDate
+
 
 class UsageContract : Contract {
     companion object {
