@@ -26,6 +26,13 @@ buildscript {
         spring_boot_version = '3.2.5'
         spring_boot_gradle_plugin_version = '3.2.5'
 
+        //account
+        accounts_release_group = 'com.r3.corda.lib.accounts'
+        accounts_release_version = '1.1'
+        //CI
+        confidential_id_release_group = "com.r3.corda.lib.ci"
+        confidential_id_release_version = "1.2"
+
         test_add_opens = ['--add-opens', 'java.base/java.time=ALL-UNNAMED', '--add-opens', 'java.base/java.io=ALL-UNNAMED',
                           '--add-opens', 'java.base/java.util=ALL-UNNAMED', '--add-opens', 'java.base/java.net=ALL-UNNAMED',
                           '--add-opens', 'java.base/java.nio=ALL-UNNAMED', '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED',
@@ -63,6 +70,7 @@ buildscript {
         classpath "net.corda.plugins:cordformation:$corda_gradle_plugins_version"
         classpath "net.corda.plugins:quasar-utils:$corda_gradle_plugins_version"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_gradle_plugin_version"
+
 
 
     }
@@ -121,10 +129,17 @@ dependencies {
     cordapp project(":workflows")
     cordapp project(":contracts")
 
+    cordapp "$corda_release_group:corda-confidential-identities:$corda_release_version"
+
     cordaProvided "org.apache.logging.log4j:log4j-slf4j2-impl:${log4j_version}"
     cordaProvided "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaProvided "org.slf4j:jul-to-slf4j:$slf4j_version"
     cordaDriver "net.corda:corda-shell:$corda_release_version"
+
+    //Account lib
+    cordapp "$confidential_id_release_group:ci-workflows:$confidential_id_release_version"
+    cordapp "$accounts_release_group:accounts-contracts:$accounts_release_version"
+    cordapp "$accounts_release_group:accounts-workflows:$accounts_release_version"
 }
 
 cordapp {
@@ -136,8 +151,15 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         projectCordapp {
             deploy = false
         }
+        cordapp("$confidential_id_release_group:ci-workflows:$confidential_id_release_version")
+        cordapp("$accounts_release_group:accounts-contracts:$accounts_release_version")
+        cordapp("$accounts_release_group:accounts-workflows:$accounts_release_version")
+
+
         cordapp project(':contracts')
         cordapp project(':workflows')
+        cordapp("$corda_release_group:corda-confidential-identities:$corda_release_version")
+        rpcUsers = [[ user: "user1", "password": "password", "permissions": ["ALL"]]]
         runSchemaMigration = true
     }
     node {
