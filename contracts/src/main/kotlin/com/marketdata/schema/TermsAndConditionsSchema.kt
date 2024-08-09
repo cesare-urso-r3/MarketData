@@ -15,6 +15,9 @@ object TermsAndConditionsSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentTandC::class.java)) {
 
+    override val migrationResource: String?
+        get() = "t-and-c-states.changelog-master";
+
     @Entity
     @Table(name = "t_and_c_states")
     class PersistentTandC(

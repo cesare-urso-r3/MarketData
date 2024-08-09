@@ -3,7 +3,7 @@ package com.marketdata.contracts
 import com.marketdata.*
 import com.marketdata.data.PricingParameter
 import com.marketdata.states.*
-import com.sun.org.apache.xpath.internal.operations.Bool
+//import com.sun.org.apache.xpath.internal.operations.Bool
 import net.corda.core.contracts.LinearPointer
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.node.NotaryInfo

@@ -80,15 +80,6 @@ allprojects {
     apply from: "${rootProject.projectDir}/repositories.gradle"
     apply plugin: 'kotlin'
 
-    repositories {
-        mavenLocal()
-        jcenter()
-        mavenCentral()
-        maven { url 'https://software.r3.com/artifactory/corda' }
-        maven { url 'https://jitpack.io' }
-        maven { url 'https://repo.gradle.org/gradle/libs-releases' }
-    }
-
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
         kotlinOptions {
             languageVersion = "1.9"
@@ -96,6 +87,10 @@ allprojects {
             jvmTarget = VERSION_17
             javaParameters = true   // Useful for reflection.
         }
+    }
+
+    tasks.withType(ProcessResources){
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
     jar {
@@ -120,6 +115,8 @@ sourceSets {
 dependencies {
     // Corda dependencies.
     cordaProvided "$corda_core_release_group:corda-core:$corda_core_release_version"
+
+    cordaBootstrapper "org.slf4j:slf4j-simple:$slf4j_version"
     cordaBootstrapper ("$corda_release_group:corda-node-api:$corda_release_version") {
         exclude group: "ch.qos.logback", module: "logback-classic"
     }
@@ -128,13 +125,18 @@ dependencies {
     // CorDapp dependencies.
     cordapp project(":workflows")
     cordapp project(":contracts")
-
     cordapp "$corda_release_group:corda-confidential-identities:$corda_release_version"
 
     cordaProvided "org.apache.logging.log4j:log4j-slf4j2-impl:${log4j_version}"
     cordaProvided "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaProvided "org.slf4j:jul-to-slf4j:$slf4j_version"
+
     cordaDriver "net.corda:corda-shell:$corda_release_version"
+
+    //Finance Lib
+    cordapp("$corda_core_release_group:corda-finance-contracts:$corda_release_version")
+    cordapp("$corda_release_group:corda-finance-workflows:$corda_release_version")
+
 
     //Account lib
     cordapp "$confidential_id_release_group:ci-workflows:$confidential_id_release_version"
@@ -142,11 +144,12 @@ dependencies {
     cordapp "$accounts_release_group:accounts-workflows:$accounts_release_version"
 }
 
+
 cordapp {
     targetPlatformVersion corda_platform_version.toInteger()
 }
 
-task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
+task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar', 'installQuasar']) {
     nodeDefaults {
         projectCordapp {
             deploy = false
@@ -158,9 +161,12 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
 
         cordapp project(':contracts')
         cordapp project(':workflows')
+        cordapp("$corda_core_release_group:corda-finance-contracts:$corda_release_version")
+        cordapp("$corda_release_group:corda-finance-workflows:$corda_release_version")
         cordapp("$corda_release_group:corda-confidential-identities:$corda_release_version")
         rpcUsers = [[ user: "user1", "password": "password", "permissions": ["ALL"]]]
         runSchemaMigration = true
+
     }
     node {
         name "O=Notary,L=London,C=GB"
@@ -170,6 +176,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
             address("localhost:10003")
             adminAddress("localhost:10043")
         }
+        runSchemaMigration = true
     }
     node {
         name "O=Provider,L=London,C=GB"
@@ -179,7 +186,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
             adminAddress("localhost:10046")
         }
         rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-
+        runSchemaMigration = true
 
         // this can be commented in or out for testing
 
@@ -200,6 +207,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
                 adminAddress("localhost:10049")
             }
             rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+            runSchemaMigration = true
         }
         node {
             name "O=Subscriber,L=New York,C=US"
@@ -209,6 +217,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
                 adminAddress("localhost:10052")
             }
             rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+            runSchemaMigration = true
         }
         node {
             name "O=Redistributor2,L=New York,C=US"
@@ -218,8 +227,10 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
                 adminAddress("localhost:10055")
             }
             rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+            runSchemaMigration = true
         }
 }
+
 
 task installQuasar(type: Copy) {
     destinationDir rootProject.file("lib")
@@ -227,3 +238,5 @@ task installQuasar(type: Copy) {
         rename 'quasar-core(.*).jar', 'quasar.jar'
     }
 }
+
+

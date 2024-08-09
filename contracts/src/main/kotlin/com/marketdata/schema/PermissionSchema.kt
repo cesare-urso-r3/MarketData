@@ -18,6 +18,9 @@ object PermissionSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentPermission::class.java)) {
 
+    override val migrationResource: String?
+        get() = "permission-states.changelog-master";
+
     @Entity
     @Table(name = "permission_states")
     class PersistentPermission(

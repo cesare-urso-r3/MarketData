@@ -15,6 +15,9 @@ object UsageReceiptSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentUsageReceipt::class.java)) {
 
+    override val migrationResource: String?
+        get() = "usage-receipt-states.changelog-master";
+
     @Entity
     @Table(name = "usage_receipt_states")
     class PersistentUsageReceipt(

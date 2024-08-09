@@ -14,6 +14,9 @@ object DataSetSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentDataSet::class.java)) {
 
+    override val migrationResource: String?
+        get() = "data-set-states.changelog-master";
+
     @Entity
     @Table(name = "data_set_states")
     class PersistentDataSet(

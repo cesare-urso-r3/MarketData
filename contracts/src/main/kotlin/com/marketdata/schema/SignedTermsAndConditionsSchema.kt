@@ -15,6 +15,9 @@ object SignedTermsAndConditionsSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentSignedTandC::class.java)) {
 
+    override val migrationResource: String?
+        get() = "signed-t-and-c-states.changelog-master";
+
     @Entity
     @Table(name = "signed_t_and_c_states")
     class PersistentSignedTandC(

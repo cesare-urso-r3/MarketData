@@ -15,6 +15,9 @@ object UsageSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentUsage::class.java)) {
 
+    override val migrationResource: String?
+        get() = "usage-states.changelog-master";
+
     @Entity
     @Table(name = "usage_states")
     class PersistentUsage(

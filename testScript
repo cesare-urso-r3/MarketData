@@ -1,11 +1,11 @@
 #!/bin/sh 
 
-osascript -e tell app "Terminal"
+osascript <<EOF
+tell application "Terminal"
     activate
     delay 0.5
-    tell app "System Events" to tell process "Terminal" to keystroke "t" using command down
-
+    tell application "System Events" to tell process "Terminal" to keystroke "t" using command down
     delay 0.5
-    do script "bash -c 'cd \"/Users/adamhouston/Dev/Corda/MarketData/build/nodes/PartyB\" ; \"/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/jre/bin/java\" \"-Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter\" \"-Dname=PartyB\" \"-jar\" \"/Users/adamhouston/Dev/Corda/MarketData/build/nodes/PartyB/corda.jar\" && exit'" in selected tab of the front window
+    do script "bash -c 'cd \"/Users/cesare.urso/Documents/GitHub/MarketData-Cesare/build/nodes/PartyB\" ; \"/opt/homebrew/Cellar/openjdk@17/17.0.11/libexec/openjdk.jdk/Contents/Home/bin/java\" \"-Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter\" \"-Dname=PartyB\" \"-jar\" \"/Users/cesare.urso/Documents/GitHub/MarketData-Cesare/build/nodes/PartyB/corda.jar\" && exit'" in selected tab of the front window
 end tell
-
+EOF

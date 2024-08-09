@@ -18,7 +18,9 @@ dependencies {
     cordaProvided "$corda_core_release_group:corda-core:$corda_core_release_version"
     cordaProvided "$corda_core_release_group:corda-core-test-utils:$corda_core_release_version"
     cordaProvided "$corda_core_release_group:corda-test-utils:$corda_core_release_version"
+    cordaProvided "$corda_release_group:corda-finance-contracts:$corda_release_version"
     testImplementation "$corda_release_group:corda-node-driver:$corda_release_version"
+
 
     implementation("javax.persistence:javax.persistence-api:2.2")
     implementation("org.hibernate:hibernate-core:5.6.14.Final")

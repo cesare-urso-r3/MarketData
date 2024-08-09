@@ -15,6 +15,9 @@ object DistributableDataSetSchemaV1 : MappedSchema(
         version = 1,
         mappedTypes = listOf(PersistentDistributableDataSet::class.java)) {
 
+    override val migrationResource: String?
+        get() = "distributable-data-set-states.changelog-master";
+
     @Entity
     @Table(name = "distributable_data_set_states")
     class PersistentDistributableDataSet(
